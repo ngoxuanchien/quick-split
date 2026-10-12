@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { addMember, deleteExpense, deleteMember, recordPayment, renameMember } from '@/app/actions';
 import { getGroup, type GroupData } from '@/db/queries';
-import { formatDateVn } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 import { formatVnd } from '@/lib/money';
 import { expensePath, groupPath } from '@/lib/routes';
 import { MAX_MEMBERS } from '@/lib/validation';
@@ -144,7 +144,7 @@ function ExpensesTab({ data }: { data: GroupData }) {
           <Link href={expensePath(id, e.id)} className="min-w-0 flex-1">
             <div className="truncate font-medium">{e.title}</div>
             <div className="text-sm text-gray-500">
-              {name.get(e.payerId)} trả · {formatDateVn(e.createdAt)}
+              {name.get(e.payerId)} trả · {formatDate(e.createdAt)}
             </div>
           </Link>
           <div className="font-semibold">{formatVnd(e.amount)}</div>

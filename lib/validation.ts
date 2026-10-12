@@ -1,12 +1,11 @@
 import { z } from 'zod';
+import { MAX_AMOUNT, MAX_MEMBERS, MAX_SHARES } from './limits';
 import { formatVnd } from './money';
+
+export { MAX_AMOUNT, MAX_MEMBERS, MAX_SHARES };
 
 // built-in zod messages (e.g. Infinity, int overflow) in Vietnamese
 z.config(z.locales.vi());
-
-export const MAX_AMOUNT = 1_000_000_000_000;
-export const MAX_SHARES = 1000;
-export const MAX_MEMBERS = 50;
 
 export const memberName = z.string().trim().min(1, 'Nhập tên thành viên').max(50, 'Tên tối đa 50 ký tự');
 
