@@ -17,4 +17,6 @@ describe('parseVnd', () => {
 describe('formatVnd', () => {
   it('formats with vi-VN grouping and đ', () => expect(formatVnd(150000)).toBe('150.000đ'));
   it('keeps the minus sign', () => expect(formatVnd(-5000)).toBe('-5.000đ'));
+  it('formats en with comma grouping and ₫', () => expect(formatVnd(150000, 'en')).toBe('150,000₫'));
+  it('keeps the minus sign in en', () => expect(formatVnd(-5000, 'en')).toBe('-5,000₫'));
 });

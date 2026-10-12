@@ -1,7 +1,10 @@
-const fmt = new Intl.NumberFormat('vi-VN');
+import type { Locale } from './i18n';
 
-export function formatVnd(n: number): string {
-  return fmt.format(n) + 'đ';
+const FMT = { vi: new Intl.NumberFormat('vi-VN'), en: new Intl.NumberFormat('en-US') };
+
+// always VND; only digit grouping and symbol follow the UI language
+export function formatVnd(n: number, locale: Locale = 'vi'): string {
+  return locale === 'vi' ? FMT.vi.format(n) + 'đ' : FMT.en.format(n) + '₫';
 }
 
 export function parseVnd(s: string): number {
