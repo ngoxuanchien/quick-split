@@ -39,7 +39,7 @@ export default async function GroupPage({
   const sum = summarize(data);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 py-4">
       <header className="space-y-1">
         <div className="flex items-center justify-between gap-2">
           <h1 className="truncate text-xl font-bold">{data.group.name}</h1>

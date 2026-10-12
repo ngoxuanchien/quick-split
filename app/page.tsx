@@ -1,28 +1,28 @@
 import { CreateGroupForm } from './create-group-form';
 
-const STEPS = [
-  ['Tạo nhóm', 'Đặt tên, nhập thành viên'],
-  ['Gửi link', 'Ai có link cũng ghi chi được'],
-  ['Chia tiền', 'Xem ai nợ ai, quét QR để trả'],
-] as const;
+const STEPS = ['① Tạo nhóm', '② Gửi link', '③ Quét QR'] as const;
 
 export default function Home() {
   return (
-    <div className="space-y-6 pt-8">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">Quick Split</h1>
-        <p className="muted">Chia tiền nhóm nhanh, không cần đăng nhập.</p>
+    <div className="pb-10">
+      <section className="hero rounded-b-[30px] px-5 pt-10 pb-16">
+        <h1 className="text-3xl font-bold tracking-tight">Quick Split</h1>
+        <p className="mt-1 text-white/85">
+          Chia tiền nhóm trong 1 phút.
+          <br />
+          Không cần đăng nhập.
+        </p>
+        <ul className="mt-4 flex flex-wrap gap-2 text-xs">
+          {STEPS.map((s) => (
+            <li key={s} className="rounded-full bg-white/20 px-3 py-1.5 font-semibold">
+              {s}
+            </li>
+          ))}
+        </ul>
+      </section>
+      <div className="-mt-10 px-4">
+        <CreateGroupForm />
       </div>
-      <ol className="grid grid-cols-3 gap-2 text-center text-sm">
-        {STEPS.map(([title, hint], i) => (
-          <li key={title} className="card space-y-1 p-3">
-            <div className="mx-auto flex size-7 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">{i + 1}</div>
-            <div className="font-medium">{title}</div>
-            <div className="muted text-xs">{hint}</div>
-          </li>
-        ))}
-      </ol>
-      <CreateGroupForm />
     </div>
   );
 }

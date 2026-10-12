@@ -13,8 +13,8 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
   const expense = data?.expenses.find((e) => e.id === Number(eid));
   if (!data || !expense) notFound();
   return (
-    <div className="space-y-4">
-      <Link href={groupPath(id)} className="text-sm text-emerald-700">
+    <div className="space-y-4 px-4 py-5">
+      <Link href={groupPath(id)} className="link text-sm">
         ← {data.group.name}
       </Link>
       <h1 className="text-xl font-bold">Sửa khoản chi</h1>
