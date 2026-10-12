@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { bankByBin } from './banks';
 import { formatVnd } from './money';
 
 // built-in zod messages (e.g. Infinity, int overflow) in Vietnamese
@@ -8,6 +9,19 @@ export const MAX_AMOUNT = 1_000_000_000_000;
 export const MAX_SHARES = 1000;
 
 export const memberName = z.string().trim().min(1, 'Nhập tên thành viên').max(50, 'Tên tối đa 50 ký tự');
+
+export const memberAccount = z
+  .object({
+    bankBin: z.string().trim(),
+    accountNo: z.string().transform((s) => s.replace(/[\s.-]/g, '')),
+  })
+  .superRefine((a, ctx) => {
+    if (!a.bankBin && !a.accountNo) return;
+    if (!a.bankBin || !a.accountNo) ctx.addIssue({ code: 'custom', message: 'Nhập đủ ngân hàng và số tài khoản' });
+    else if (!bankByBin(a.bankBin)) ctx.addIssue({ code: 'custom', message: 'Ngân hàng không hợp lệ' });
+    else if (!/^\d{6,19}$/.test(a.accountNo)) ctx.addIssue({ code: 'custom', message: 'Số tài khoản gồm 6–19 chữ số' });
+  })
+  .transform((a) => (a.bankBin && a.accountNo ? a : { bankBin: null, accountNo: null }));
 
 export const groupInput = z.object({
   name: z.string().trim().min(1, 'Nhập tên nhóm').max(100, 'Tên nhóm tối đa 100 ký tự'),

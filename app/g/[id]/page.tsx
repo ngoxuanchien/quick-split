@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addMember, deleteExpense, deleteMember, recordPayment, renameMember } from '@/app/actions';
+import { addMember, deleteExpense, deleteMember, recordPayment, updateMember } from '@/app/actions';
 import { getGroup, type GroupData } from '@/db/queries';
+import { bankByBin } from '@/lib/banks';
 import { formatDateVn } from '@/lib/date';
 import { formatVnd } from '@/lib/money';
 import { expensePath, groupPath } from '@/lib/routes';
 import { summarize, type Summary } from '@/lib/summary';
+import { Avatar } from './avatar';
 import { CopyLink } from './copy-link';
 import { DeleteButton } from './delete-button';
+import { MemberEditForm } from './member-edit-form';
 import { MemberNameForm } from './member-name-form';
 import { SubmitButton } from './submit-button';
 
@@ -81,30 +84,31 @@ function MembersTab({ data }: { data: GroupData }) {
   const used = new Set(data.expenses.flatMap((e) => [e.payerId, ...e.splits.map((s) => s.memberId)]));
   const minReached = data.members.length <= 2;
   return (
-    <div className="card space-y-3">
+    <div className="space-y-3">
       {data.members.map((m) => {
-        const locked = minReached || used.has(m.id);
+        const hint = deleteHint(used.has(m.id), minReached);
+        const bank = bankByBin(m.bankBin);
         return (
-          <div key={m.id} className="flex items-start gap-2">
-            <MemberNameForm
-              action={renameMember.bind(null, id, m.id)}
-              defaultValue={m.name}
-              label="Lưu"
-              buttonClass="text-sm text-emerald-700"
-            />
-            <form action={deleteMember.bind(null, id, m.id)} className="pt-2">
-              <button
-                disabled={locked}
-                title={deleteHint(used.has(m.id), minReached)}
-                className="text-sm text-red-600 disabled:text-gray-300"
-              >
-                Xoá
+          <details key={m.id} className="card">
+            <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+              <Avatar id={m.id} name={m.name} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{m.name}</div>
+                <div className="muted truncate text-sm">{bank && m.accountNo ? `${bank.name} · ${m.accountNo}` : 'Chưa có STK'}</div>
+              </div>
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Sửa</span>
+            </summary>
+            <MemberEditForm action={updateMember.bind(null, id, m.id)} member={m} />
+            <form action={deleteMember.bind(null, id, m.id)} className="mt-2 flex items-center justify-end gap-2">
+              {hint && <span className="muted text-xs">{hint}</span>}
+              <button disabled={!!hint} className="text-sm text-red-600 disabled:text-gray-300 dark:disabled:text-gray-600">
+                Xoá thành viên
               </button>
             </form>
-          </div>
+          </details>
         );
       })}
-      <div className="border-t border-gray-200 pt-3">
+      <div className="card">
         <MemberNameForm action={addMember.bind(null, id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn" />
       </div>
     </div>

@@ -10,7 +10,7 @@ import { expenses, expenseSplits, groups, members } from '@/db/schema';
 import { isOwed } from '@/lib/split';
 import { PAYMENT_TITLE } from '@/lib/summary';
 import { groupPath } from '@/lib/routes';
-import { expenseInput, firstError, groupInput, memberName, type ExpenseInput } from '@/lib/validation';
+import { expenseInput, firstError, groupInput, memberAccount, memberName, type ExpenseInput } from '@/lib/validation';
 
 // input echoes submitted text so forms can refill it (React 19 resets forms after an action)
 export type Result = { error: string; input?: Record<string, string> } | undefined;
@@ -47,17 +47,23 @@ export async function addMember(groupId: string, _prev: Result, formData: FormDa
   return undefined;
 }
 
-export async function renameMember(groupId: string, memberId: number, _prev: Result, formData: FormData): Promise<Result> {
-  const input = { name: String(formData.get('name') ?? '') };
+export async function updateMember(groupId: string, memberId: number, _prev: Result, formData: FormData): Promise<Result> {
+  const input = {
+    name: String(formData.get('name') ?? ''),
+    bankBin: String(formData.get('bankBin') ?? ''),
+    accountNo: String(formData.get('accountNo') ?? ''),
+  };
   const name = memberName.safeParse(input.name);
   if (!name.success) return { error: firstError(name.error), input };
+  const account = memberAccount.safeParse(input);
+  if (!account.success) return { error: firstError(account.error), input };
   const existing = await groupMembers(groupId);
   if (existing.some((m) => m.id !== memberId && m.name.toLowerCase() === name.data.toLowerCase())) {
     return { error: 'Tên thành viên bị trùng', input };
   }
   await db
     .update(members)
-    .set({ name: name.data })
+    .set({ name: name.data, ...account.data })
     .where(and(eq(members.id, memberId), eq(members.groupId, groupId)));
   revalidatePath(groupPath(groupId));
   return undefined;

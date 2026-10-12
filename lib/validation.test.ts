@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { expenseInput, firstError, groupInput, MAX_AMOUNT } from './validation';
+import { expenseInput, firstError, groupInput, MAX_AMOUNT, memberAccount } from './validation';
 
 const ok = { title: 'Ăn tối', amount: 300000, payerId: 1, splitType: 'equal' as const, splits: [{ memberId: 1, value: 1 }, { memberId: 2, value: 1 }] };
 const err = (input: unknown) => {
@@ -53,5 +53,27 @@ describe('expenseInput: huge values get Vietnamese messages', () => {
   });
   it('shares value 1e16', () => {
     expect(err({ ...ok, splitType: 'shares', splits: [{ memberId: 1, value: 1e16 }] })).toBe('Giá trị chia quá lớn');
+  });
+});
+
+describe('memberAccount', () => {
+  const parse = (bankBin: string, accountNo: string) => memberAccount.safeParse({ bankBin, accountNo });
+  const msg = (bankBin: string, accountNo: string) => {
+    const r = parse(bankBin, accountNo);
+    return r.success ? null : firstError(r.error);
+  };
+  it('both empty clears the account', () => expect(parse('', ' ').data).toEqual({ bankBin: null, accountNo: null }));
+  it('strips spaces, dots and dashes', () => {
+    expect(parse('970437', '0123 456.78-9').data).toEqual({ bankBin: '970437', accountNo: '0123456789' });
+  });
+  it('requires both fields', () => {
+    expect(msg('970437', '')).toBe('Nhập đủ ngân hàng và số tài khoản');
+    expect(msg('', '123456')).toBe('Nhập đủ ngân hàng và số tài khoản');
+  });
+  it('rejects unknown bank', () => expect(msg('000000', '123456')).toBe('Ngân hàng không hợp lệ'));
+  it('rejects letters and wrong length', () => {
+    expect(msg('970437', '12345a')).toBe('Số tài khoản gồm 6–19 chữ số');
+    expect(msg('970437', '12345')).toBe('Số tài khoản gồm 6–19 chữ số');
+    expect(msg('970437', '1'.repeat(20))).toBe('Số tài khoản gồm 6–19 chữ số');
   });
 });

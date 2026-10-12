@@ -12,6 +12,8 @@ export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   groupId: text('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  bankBin: text('bank_bin'),
+  accountNo: text('account_no'),
 });
 
 export const expenses = pgTable('expenses', {
