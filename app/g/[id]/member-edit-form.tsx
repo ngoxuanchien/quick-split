@@ -13,7 +13,7 @@ export function MemberEditForm({ action, member }: { action: (prev: Result, form
     <form action={formAction} className="mt-3 space-y-2">
       <input name="name" defaultValue={v?.name ?? member.name} required maxLength={50} aria-label="Tên" className="input" />
       <div className="flex gap-2">
-        <select name="bankBin" defaultValue={v?.bankBin ?? member.bankBin ?? ''} aria-label="Ngân hàng" className="input">
+        <select key={v?.bankBin ?? member.bankBin ?? ''} name="bankBin" defaultValue={v?.bankBin ?? member.bankBin ?? ''} aria-label="Ngân hàng" className="input">
           <option value="">Ngân hàng…</option>
           {BANKS.map((b) => (
             <option key={b.bin} value={b.bin}>

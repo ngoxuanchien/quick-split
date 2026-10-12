@@ -38,20 +38,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const hasQr = qrs.some(Boolean);
   const name = new Map(data.members.map((m) => [m.id, m.name]));
   const [regular, bold] = await fonts;
+  // ponytail: estimated layout height (Satori needs a fixed size); measured per block, padded for wrapped names
   const height =
-    330 +
+    400 +
+    (data.group.name.length > 25 ? 70 : 0) +
     sum.rows.length * 64 +
-    (sum.transfers.length ? sum.transfers.reduce((h, _, i) => h + (qrs[i] ? 300 : 120), 0) : 80) +
-    (hasQr ? 80 : 0);
+    (sum.transfers.length
+      ? sum.transfers.reduce((h, t, i) => h + (qrs[i] ? 304 : t.account ? 206 : 170) + ((name.get(t.from)?.length ?? 0) + (name.get(t.to)?.length ?? 0) > 40 ? 40 : 0), 0)
+      : 90) +
+    (hasQr ? 70 : 0);
 
   return new ImageResponse(
     (
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', padding: 56, background: '#f9fafb', color: '#111827', fontFamily: 'BeVietnamPro', fontSize: 30 }}>
-        <div style={{ display: 'flex', fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
-        <div style={{ display: 'flex', marginTop: 8, color: GRAY }}>
+        <div style={{ display: 'flex', flexShrink: 0, fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
+        <div style={{ display: 'flex', flexShrink: 0, marginTop: 8, color: GRAY }}>
           {`${data.members.length} người · Tổng chi ${formatVnd(sum.total)} · ${formatDateVn(new Date())}`}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 32, padding: '16px 32px', background: '#fff', borderRadius: 24 }}>
+        <div style={{ display: 'flex', flexShrink: 0, flexDirection: 'column', marginTop: 32, padding: '16px 32px', background: '#fff', borderRadius: 24 }}>
           {sum.rows.map(({ member: m, balance: v }) => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', height: 64 }}>
               <Dot id={m.id} name={m.name} />
@@ -60,10 +64,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', marginTop: 40, fontSize: 40, fontWeight: 700 }}>Cách trả nợ</div>
-        {sum.transfers.length === 0 && <div style={{ display: 'flex', marginTop: 16, color: GRAY }}>Mọi người đã cân bằng.</div>}
+        <div style={{ display: 'flex', flexShrink: 0, marginTop: 40, fontSize: 40, fontWeight: 700 }}>Cách trả nợ</div>
+        {sum.transfers.length === 0 && <div style={{ display: 'flex', flexShrink: 0, marginTop: 16, color: GRAY }}>Mọi người đã cân bằng.</div>}
         {sum.transfers.map((t, i) => (
-          <div key={`${t.from}-${t.to}`} style={{ display: 'flex', alignItems: 'center', marginTop: 16, padding: 24, background: '#fff', borderRadius: 24 }}>
+          <div key={`${t.from}-${t.to}`} style={{ display: 'flex', flexShrink: 0, alignItems: 'center', marginTop: 16, padding: 24, background: '#fff', borderRadius: 24 }}>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ display: 'flex' }}>{`${name.get(t.from)} trả ${name.get(t.to)}`}</div>
               <div style={{ display: 'flex', fontSize: 44, fontWeight: 700, color: GREEN }}>{formatVnd(t.amount)}</div>
@@ -74,7 +78,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           </div>
         ))}
         {hasQr && (
-          <div style={{ display: 'flex', marginTop: 24, color: AMBER, fontSize: 24 }}>
+          <div style={{ display: 'flex', flexShrink: 0, marginTop: 24, color: AMBER, fontSize: 24 }}>
             Quét QR rồi kiểm tra đúng tên người nhận trên app ngân hàng trước khi chuyển.
           </div>
         )}
