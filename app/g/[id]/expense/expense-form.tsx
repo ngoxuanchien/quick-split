@@ -78,13 +78,13 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
         </select>
       </label>
 
-      <div className="grid grid-cols-3 rounded-lg bg-gray-200 dark:bg-gray-800 p-1 text-center text-sm">
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-brand-50 p-1 text-center text-sm dark:bg-field-dark">
         {TYPES.map(([t, label]) => (
           <button
             key={t}
             type="button"
             onClick={() => setSplitType(t)}
-            className={`rounded-md py-1.5 ${splitType === t ? 'bg-white font-medium text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-400' : 'muted'}`}
+            className={`rounded-full py-2 ${splitType === t ? 'bg-linear-to-r from-brand-600 to-accent-600 font-bold text-white shadow' : 'muted'}`}
           >
             {label}
           </button>
@@ -99,7 +99,7 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
                 type="checkbox"
                 checked={!!equal[m.id]}
                 onChange={(e) => setEqual({ ...equal, [m.id]: e.target.checked })}
-                className="size-5"
+                className="size-5 accent-brand-600"
                 aria-label={m.name}
               />
             )}
@@ -133,7 +133,7 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
         </p>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <button disabled={pending} className="btn w-full">
         {pending ? 'Đang lưu…' : 'Lưu'}
       </button>
