@@ -56,7 +56,7 @@ export function ShareImage({ groupId, groupName }: { groupId: string; groupName:
   }[status];
 
   return (
-    <button type="button" onClick={run} disabled={status === 'busy'} className="btn w-full">
+    <button type="button" onClick={run} disabled={status === 'busy'} className="rounded-full bg-white px-4 py-2 text-sm font-bold text-brand-700 hover:bg-brand-50 disabled:opacity-60">
       {label}
     </button>
   );

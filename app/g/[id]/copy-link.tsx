@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-const LABEL = { idle: '🔗 Copy link', copied: 'Đã copy ✓', failed: 'Copy lỗi, hãy copy URL' };
+const LABEL = { idle: '🔗 Mời', copied: 'Đã copy ✓', failed: 'Copy lỗi, hãy copy URL' };
 
 export function CopyLink() {
   const [status, setStatus] = useState<keyof typeof LABEL>('idle');

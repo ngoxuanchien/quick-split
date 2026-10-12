@@ -17,9 +17,9 @@ import { ShareImage } from './share-image';
 import { SubmitButton } from './submit-button';
 
 const TABS = [
-  ['expenses', 'Khoản chi'],
-  ['balances', 'Số dư'],
-  ['members', 'Thành viên'],
+  ['expenses', 'Khoản chi', '🧾'],
+  ['balances', 'Số dư', '💜'],
+  ['members', 'Thành viên', '👥'],
 ] as const;
 
 // always reads fresh DB data; blocking render is intended
@@ -37,34 +37,59 @@ export default async function GroupPage({
   const data = await getGroup(id);
   if (!data) notFound();
   const sum = summarize(data);
+  const current = tab === 'members' || tab === 'balances' ? tab : 'expenses';
 
   return (
-    <div className="space-y-4 px-4 py-4">
-      <header className="space-y-1">
+    <div className="pb-28">
+      <header className="hero px-4 pt-5 pb-4">
         <div className="flex items-center justify-between gap-2">
-          <h1 className="truncate text-xl font-bold">{data.group.name}</h1>
+          <h1 className="truncate text-lg font-bold">{current === 'members' ? 'Thành viên' : data.group.name}</h1>
           <CopyLink />
         </div>
-        <p className="muted text-sm">
-          {data.members.length} người · Tổng chi {formatVnd(sum.total)}
-        </p>
+        {current === 'members' ? (
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <p className="text-sm text-white/85">Lưu STK để bạn bè quét QR trả tiền</p>
+            <a href="#add-member" className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-brand-600">
+              ＋ Thêm
+            </a>
+          </div>
+        ) : (
+          <div className="glass mt-3 px-4 py-3">
+            <p className="text-xs text-white/85">Tổng chi tiêu · {data.members.length} người</p>
+            <p className="text-2xl font-bold tracking-tight">{formatVnd(sum.total)}</p>
+            {current === 'balances' && (
+              <div className="mt-2">
+                <ShareImage groupId={id} groupName={data.group.name} />
+              </div>
+            )}
+          </div>
+        )}
       </header>
-      <nav className="sticky top-0 z-10 -mx-4 bg-gray-50/90 px-4 py-2 backdrop-blur dark:bg-gray-950/90">
-        <div className="grid grid-cols-3 rounded-lg bg-gray-200 p-1 text-center text-sm dark:bg-gray-800">
-          {TABS.map(([key, label]) => (
+      <div className="px-4 pt-4">
+        {current === 'members' && <MembersTab data={data} />}
+        {current === 'balances' && <BalancesTab data={data} sum={sum} />}
+        {current === 'expenses' && <ExpensesTab data={data} />}
+      </div>
+      <nav
+        aria-label="Chuyển tab"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-lg border-t border-brand-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-line-dark dark:bg-field-dark/95"
+      >
+        <div className="grid grid-cols-3">
+          {TABS.map(([key, label, icon]) => (
             <Link
               key={key}
               href={groupPath(id, key)}
-              className={`rounded-md py-1.5 ${tab === key ? 'bg-white font-medium text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-400' : 'muted'}`}
+              aria-current={current === key ? 'page' : undefined}
+              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${current === key ? 'font-bold text-brand-600 dark:text-brand-300' : 'text-gray-400 dark:text-brand-300/50'}`}
             >
+              <span aria-hidden className="text-lg leading-none">
+                {icon}
+              </span>
               {label}
             </Link>
           ))}
         </div>
       </nav>
-      {tab === 'members' && <MembersTab data={data} />}
-      {tab === 'balances' && <BalancesTab data={data} sum={sum} />}
-      {tab !== 'members' && tab !== 'balances' && <ExpensesTab data={data} />}
     </div>
   );
 }
@@ -174,7 +199,6 @@ async function BalancesTab({ data, sum }: { data: GroupData; sum: Summary }) {
   const qrs = await transferQrs(data.group.name, sum.transfers);
   return (
     <div className="space-y-4">
-      <ShareImage groupId={id} groupName={data.group.name} />
       <div className="card space-y-3">
         {sum.rows.map(({ member: m, balance: v }) => (
           <div key={m.id} className="space-y-1">
