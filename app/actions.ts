@@ -12,7 +12,7 @@ import { isLocale, LOCALE_COOKIE } from '@/lib/i18n';
 import { getT } from '@/lib/i18n/server';
 import { isOwed, PAYMENT_TITLE } from '@/lib/split';
 import { groupPath } from '@/lib/routes';
-import { expenseInput, firstError, groupInput, MAX_MEMBERS, memberName, type ExpenseInput } from '@/lib/validation';
+import { expenseInput, firstError, groupInput, MAX_MEMBERS, memberAccount, memberName, type ExpenseInput } from '@/lib/validation';
 
 // input echoes submitted text so forms can refill it (React 19 resets forms after an action)
 export type Result = { error: string; input?: Record<string, string> } | undefined;
@@ -58,18 +58,24 @@ export async function addMember(groupId: string, _prev: Result, formData: FormDa
   return undefined;
 }
 
-export async function renameMember(groupId: string, memberId: number, _prev: Result, formData: FormData): Promise<Result> {
-  const input = { name: String(formData.get('name') ?? '') };
+export async function updateMember(groupId: string, memberId: number, _prev: Result, formData: FormData): Promise<Result> {
+  const input = {
+    name: String(formData.get('name') ?? ''),
+    bankBin: String(formData.get('bankBin') ?? ''),
+    accountNo: String(formData.get('accountNo') ?? ''),
+  };
   const t = await getT();
   const name = memberName.safeParse(input.name);
   if (!name.success) return { error: firstError(name.error, t), input };
+  const account = memberAccount.safeParse(input);
+  if (!account.success) return { error: firstError(account.error, t), input };
   const existing = await groupMembers(groupId);
   if (existing.some((m) => m.id !== memberId && m.name.toLowerCase() === name.data.toLowerCase())) {
     return { error: t.errors.duplicateMemberName, input };
   }
   await db
     .update(members)
-    .set({ name: name.data })
+    .set({ name: name.data, ...account.data })
     .where(and(eq(members.id, memberId), eq(members.groupId, groupId)));
   revalidatePath(groupPath(groupId));
   return undefined;

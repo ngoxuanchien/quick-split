@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { bankByBin } from './banks';
 import type { Dict } from './i18n';
 import { MAX_AMOUNT, MAX_MEMBERS, MAX_SHARES } from './limits';
 
@@ -9,6 +10,19 @@ export type ErrorKey = keyof Dict['errors'];
 const k = (key: ErrorKey) => key;
 
 export const memberName = z.string().trim().min(1, k('memberNameRequired')).max(50, k('memberNameTooLong'));
+
+export const memberAccount = z
+  .object({
+    bankBin: z.string().trim(),
+    accountNo: z.string().transform((s) => s.replace(/[\s.-]/g, '')),
+  })
+  .superRefine((a, ctx) => {
+    if (!a.bankBin && !a.accountNo) return;
+    if (!a.bankBin || !a.accountNo) ctx.addIssue({ code: 'custom', message: k('accountIncomplete') });
+    else if (!bankByBin(a.bankBin)) ctx.addIssue({ code: 'custom', message: k('bankInvalid') });
+    else if (!/^\d{6,19}$/.test(a.accountNo)) ctx.addIssue({ code: 'custom', message: k('accountInvalid') });
+  })
+  .transform((a) => (a.bankBin && a.accountNo ? a : { bankBin: null, accountNo: null }));
 
 export const groupInput = z.object({
   name: z.string().trim().min(1, k('groupNameRequired')).max(100, k('groupNameTooLong')),

@@ -9,7 +9,7 @@ export function CopyLink() {
   return (
     <button
       type="button"
-      className="shrink-0 rounded-lg border border-gray-300 px-3 py-1 text-sm"
+      className="btn-ghost shrink-0"
       onClick={async () => {
         try {
           // navigator.clipboard is undefined outside secure contexts (e.g. http://<LAN IP>)

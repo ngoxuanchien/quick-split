@@ -62,7 +62,7 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
       </label>
       <label className="block space-y-1">
         <span className="text-sm font-medium">
-          {t.expense.amount} {amount > 0 && <span className="text-gray-500">= {formatVnd(amount, locale)}</span>}
+          {t.expense.amount} {amount > 0 && <span className="muted">= {formatVnd(amount, locale)}</span>}
         </span>
         <input value={amountText} onChange={(e) => setAmountText(e.target.value)} required inputMode="numeric" placeholder="300000" className="input" />
       </label>
@@ -77,13 +77,13 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
         </select>
       </label>
 
-      <div className="grid grid-cols-3 rounded-lg bg-gray-200 p-1 text-center text-sm">
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-brand-50 p-1 text-center text-sm dark:bg-field-dark">
         {TYPES.map((type) => (
           <button
             key={type}
             type="button"
             onClick={() => setSplitType(type)}
-            className={`rounded-md py-1.5 ${splitType === type ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
+            className={`rounded-full py-2 ${splitType === type ? 'bg-linear-to-r from-brand-600 to-accent-600 font-bold text-white shadow' : 'muted'}`}
           >
             {t.expense.splitTypes[type]}
           </button>
@@ -98,7 +98,7 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
                 type="checkbox"
                 checked={!!equal[m.id]}
                 onChange={(e) => setEqual({ ...equal, [m.id]: e.target.checked })}
-                className="size-5"
+                className="size-5 accent-brand-600"
                 aria-label={m.name}
               />
             )}
@@ -122,17 +122,17 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
                 aria-label={t.expense.sharesOf(m.name)}
               />
             )}
-            <span className="w-28 text-right text-sm text-gray-600">{owed.has(m.id) ? formatVnd(owed.get(m.id)!, locale) : '–'}</span>
+            <span className="w-28 text-right text-sm muted">{owed.has(m.id) ? formatVnd(owed.get(m.id)!, locale) : '–'}</span>
           </li>
         ))}
       </ul>
       {splitType === 'exact' && (
-        <p className={`text-sm ${exactSum === amount ? 'text-gray-600' : 'text-red-600'}`}>
+        <p className={`text-sm ${exactSum === amount ? 'muted' : 'text-red-600'}`}>
           {t.expense.splitTotal(formatVnd(exactSum, locale), formatVnd(amount, locale))}
         </p>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <button disabled={pending} className="btn w-full">
         {pending ? t.common.saving : t.common.save}
       </button>
