@@ -10,12 +10,27 @@ import { transferQrs } from '@/lib/qr';
 import { summarize } from '@/lib/summary';
 
 const font = (w: string) => readFile(join(process.cwd(), `assets/fonts/BeVietnamPro-${w}.ttf`));
-const fonts = Promise.all([font('Regular'), font('Bold')]);
+// lazy so a missing font fails the request (500) instead of an unhandled rejection at import
+let fonts: ReturnType<typeof loadFonts> | undefined;
+const loadFonts = () => Promise.all([font('Regular'), font('Bold')]);
 
 const GREEN = '#059669';
 const RED = '#dc2626';
 const GRAY = '#6b7280';
 const AMBER = '#b45309';
+// single line + ellipsis keeps every block a fixed height, so the image height below stays exact
+const ONE_LINE = { overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' } as const;
+
+function balanceColor(v: number) {
+  if (v > 0) return GREEN;
+  if (v < 0) return RED;
+  return GRAY;
+}
+
+function transferHeight(hasQr: boolean, hasAccount: boolean) {
+  if (hasQr) return 304;
+  return hasAccount ? 206 : 170;
+}
 
 function Dot({ id, name }: { id: number; name: string }) {
   return (
@@ -37,21 +52,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const qrs = await transferQrs(data.group.name, sum.transfers);
   const hasQr = qrs.some(Boolean);
   const name = new Map(data.members.map((m) => [m.id, m.name]));
-  const [regular, bold] = await fonts;
-  // ponytail: estimated layout height (Satori needs a fixed size); measured per block, padded for wrapped names
+  const [regular, bold] = await (fonts ??= loadFonts());
+  // measured per block; text is single-line so no wrapping to account for
   const height =
     400 +
-    (data.group.name.length > 25 ? 70 : 0) +
     sum.rows.length * 64 +
-    (sum.transfers.length
-      ? sum.transfers.reduce((h, t, i) => h + (qrs[i] ? 304 : t.account ? 206 : 170) + ((name.get(t.from)?.length ?? 0) + (name.get(t.to)?.length ?? 0) > 40 ? 40 : 0), 0)
-      : 90) +
+    (sum.transfers.length ? sum.transfers.reduce((h, t, i) => h + transferHeight(!!qrs[i], !!t.account), 0) : 90) +
     (hasQr ? 70 : 0);
 
   return new ImageResponse(
     (
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', padding: 56, background: '#f9fafb', color: '#111827', fontFamily: 'BeVietnamPro', fontSize: 30 }}>
-        <div style={{ display: 'flex', flexShrink: 0, fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
+        <div style={{ ...ONE_LINE, display: 'flex', flexShrink: 0, fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
         <div style={{ display: 'flex', flexShrink: 0, marginTop: 8, color: GRAY }}>
           {`${data.members.length} người · Tổng chi ${formatVnd(sum.total)} · ${formatDateVn(new Date())}`}
         </div>
@@ -59,8 +71,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           {sum.rows.map(({ member: m, balance: v }) => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', height: 64 }}>
               <Dot id={m.id} name={m.name} />
-              <div style={{ display: 'flex', flex: 1, marginLeft: 16 }}>{m.name}</div>
-              <div style={{ display: 'flex', fontWeight: 700, color: v > 0 ? GREEN : v < 0 ? RED : GRAY }}>{`${v > 0 ? '+' : ''}${formatVnd(v)}`}</div>
+              <div style={{ ...ONE_LINE, display: 'flex', flex: 1, marginLeft: 16, marginRight: 16 }}>{m.name}</div>
+              <div style={{ display: 'flex', fontWeight: 700, color: balanceColor(v) }}>{`${v > 0 ? '+' : ''}${formatVnd(v)}`}</div>
             </div>
           ))}
         </div>
@@ -68,8 +80,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         {sum.transfers.length === 0 && <div style={{ display: 'flex', flexShrink: 0, marginTop: 16, color: GRAY }}>Mọi người đã cân bằng.</div>}
         {sum.transfers.map((t, i) => (
           <div key={`${t.from}-${t.to}`} style={{ display: 'flex', flexShrink: 0, alignItems: 'center', marginTop: 16, padding: 24, background: '#fff', borderRadius: 24 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ display: 'flex' }}>{`${name.get(t.from)} trả ${name.get(t.to)}`}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+              <div style={{ ...ONE_LINE, display: 'flex' }}>{`${name.get(t.from)} trả ${name.get(t.to)}`}</div>
               <div style={{ display: 'flex', fontSize: 44, fontWeight: 700, color: GREEN }}>{formatVnd(t.amount)}</div>
               {t.account && <div style={{ display: 'flex', color: GRAY, fontSize: 26 }}>{`${t.account.bank.name} · ${t.account.accountNo}`}</div>}
             </div>
