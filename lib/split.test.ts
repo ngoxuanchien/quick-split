@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { balances, computeShares, settle, type ExpenseLike } from './split';
+import { balances, computeShares, isOwed, settle, type ExpenseLike } from './split';
 
 const sum = (m: Map<number, number>) => [...m.values()].reduce((a, b) => a + b, 0);
 
@@ -73,5 +73,16 @@ describe('settle', () => {
 
   it('returns nothing when everyone is settled', () => {
     expect(settle(new Map([[1, 0], [2, 0]]))).toEqual([]);
+  });
+});
+
+describe('isOwed', () => {
+  const dinner: ExpenseLike = { amount: 300, payerId: 1, splitType: 'equal', splits: [{ memberId: 1, value: 1 }, { memberId: 2, value: 1 }, { memberId: 3, value: 1 }] };
+  it('true for a transfer still in the settle list', () => {
+    expect(isOwed([dinner], { from: 2, to: 1, amount: 100 })).toBe(true);
+  });
+  it('false once that payment is recorded (blocks double "Đã trả")', () => {
+    const paid: ExpenseLike = { amount: 100, payerId: 2, splitType: 'exact', splits: [{ memberId: 1, value: 100 }] };
+    expect(isOwed([dinner, paid], { from: 2, to: 1, amount: 100 })).toBe(false);
   });
 });

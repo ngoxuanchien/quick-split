@@ -55,3 +55,7 @@ export function settle(bal: Map<number, number>): Transfer[] {
   }
   return out;
 }
+
+export function isOwed(expenses: ExpenseLike[], t: Transfer): boolean {
+  return settle(balances(expenses)).some((x) => x.from === t.from && x.to === t.to && x.amount === t.amount);
+}

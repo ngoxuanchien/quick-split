@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { formatVnd } from './money';
 
+// built-in zod messages (e.g. Infinity, int overflow) in Vietnamese
+z.config(z.locales.vi());
+
 export const MAX_AMOUNT = 1_000_000_000_000;
 export const MAX_SHARES = 1000;
 
@@ -18,11 +21,11 @@ export const groupInput = z.object({
 export const expenseInput = z
   .object({
     title: z.string().trim().min(1, 'Nhập tên khoản chi').max(100, 'Tên tối đa 100 ký tự'),
-    amount: z.number().int().positive('Số tiền phải lớn hơn 0').max(MAX_AMOUNT, 'Số tiền quá lớn'),
+    amount: z.number().max(MAX_AMOUNT, 'Số tiền quá lớn').int().positive('Số tiền phải lớn hơn 0'),
     payerId: z.number().int(),
     splitType: z.enum(['equal', 'exact', 'shares']),
     splits: z
-      .array(z.object({ memberId: z.number().int(), value: z.number().int().positive().max(MAX_AMOUNT) }))
+      .array(z.object({ memberId: z.number().int(), value: z.number().max(MAX_AMOUNT, 'Giá trị chia quá lớn').int().positive() }))
       .min(1, 'Chọn ít nhất 1 người'),
   })
   .superRefine((e, ctx) => {

@@ -9,11 +9,11 @@ export function CreateGroupForm() {
     <form action={action} className="card space-y-4">
       <label className="block space-y-1">
         <span className="text-sm font-medium">Tên nhóm</span>
-        <input name="name" required maxLength={100} placeholder="Đà Lạt 2026" className="input" />
+        <input name="name" defaultValue={state?.input?.name} required maxLength={100} placeholder="Đà Lạt 2026" className="input" />
       </label>
       <label className="block space-y-1">
         <span className="text-sm font-medium">Thành viên (mỗi dòng 1 người)</span>
-        <textarea name="members" required rows={5} placeholder={'An\nBình\nChi'} className="input" />
+        <textarea name="members" defaultValue={state?.input?.members} required rows={5} placeholder={'An\nBình\nChi'} className="input" />
       </label>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button disabled={pending} className="btn w-full">

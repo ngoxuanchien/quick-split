@@ -6,6 +6,8 @@ import { formatVnd } from '@/lib/money';
 import { balances, settle } from '@/lib/split';
 import { CopyLink } from './copy-link';
 import { DeleteButton } from './delete-button';
+import { MemberNameForm } from './member-name-form';
+import { SubmitButton } from './submit-button';
 
 const TABS = [
   ['expenses', 'Khoản chi'],
@@ -61,12 +63,14 @@ function MembersTab({ data }: { data: GroupData }) {
       {data.members.map((m) => {
         const locked = minReached || used.has(m.id);
         return (
-          <div key={m.id} className="flex items-center gap-2">
-            <form action={renameMember.bind(null, id, m.id)} className="flex flex-1 gap-2">
-              <input name="name" defaultValue={m.name} required maxLength={50} className="input" />
-              <button className="text-sm text-emerald-700">Lưu</button>
-            </form>
-            <form action={deleteMember.bind(null, id, m.id)}>
+          <div key={m.id} className="flex items-start gap-2">
+            <MemberNameForm
+              action={renameMember.bind(null, id, m.id)}
+              defaultValue={m.name}
+              label="Lưu"
+              buttonClass="text-sm text-emerald-700"
+            />
+            <form action={deleteMember.bind(null, id, m.id)} className="pt-2">
               <button
                 disabled={locked}
                 title={used.has(m.id) ? 'Đã có khoản chi, không xoá được' : minReached ? 'Nhóm cần ít nhất 2 người' : undefined}
@@ -78,10 +82,9 @@ function MembersTab({ data }: { data: GroupData }) {
           </div>
         );
       })}
-      <form action={addMember.bind(null, id)} className="flex gap-2 border-t border-gray-200 pt-3">
-        <input name="name" required maxLength={50} placeholder="Tên thành viên mới" className="input" />
-        <button className="btn">Thêm</button>
-      </form>
+      <div className="border-t border-gray-200 pt-3">
+        <MemberNameForm action={addMember.bind(null, id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn" />
+      </div>
     </div>
   );
 }
@@ -141,7 +144,7 @@ function BalancesTab({ data }: { data: GroupData }) {
             <div className="font-semibold">{formatVnd(t.amount)}</div>
           </div>
           <form action={recordPayment.bind(null, id, t.from, t.to, t.amount)}>
-            <button className="btn">Đã trả</button>
+            <SubmitButton>Đã trả</SubmitButton>
           </form>
         </div>
       ))}

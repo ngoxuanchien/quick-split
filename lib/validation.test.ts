@@ -45,3 +45,13 @@ describe('expenseInput', () => {
     expect(err({ ...ok, splitType: 'shares', splits: [{ memberId: 1, value: 1001 }] })).toBe('Số phần tối đa 1000');
   });
 });
+
+describe('expenseInput: huge values get Vietnamese messages', () => {
+  it('amount 1e16', () => expect(err({ ...ok, amount: 1e16 })).toBe('Số tiền quá lớn'));
+  it('amount Infinity is not reported in English', () => {
+    expect(err({ ...ok, amount: Infinity })).not.toMatch(/Invalid|expected/);
+  });
+  it('shares value 1e16', () => {
+    expect(err({ ...ok, splitType: 'shares', splits: [{ memberId: 1, value: 1e16 }] })).toBe('Giá trị chia quá lớn');
+  });
+});

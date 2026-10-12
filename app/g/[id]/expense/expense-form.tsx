@@ -33,7 +33,8 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
     ),
   );
   const [exact, setExact] = useState(() => initial('exact', ''));
-  const [shares, setShares] = useState(() => initial('shares', '1'));
+  // editing a shares expense: members without a stored split had 0 shares, keep it that way
+  const [shares, setShares] = useState(() => initial('shares', expense?.splitType === 'shares' ? '0' : '1'));
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
 

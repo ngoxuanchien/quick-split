@@ -5,23 +5,27 @@ import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { db } from '@/db';
+import { getGroup } from '@/db/queries';
 import { expenses, expenseSplits, groups, members } from '@/db/schema';
+import { isOwed } from '@/lib/split';
 import { expenseInput, firstError, groupInput, memberName, type ExpenseInput } from '@/lib/validation';
 
-export type Result = { error: string } | undefined;
+// input echoes submitted text so forms can refill it (React 19 resets forms after an action)
+export type Result = { error: string; input?: Record<string, string> } | undefined;
 
 const groupMembers = (groupId: string) =>
   db.select({ id: members.id, name: members.name }).from(members).where(eq(members.groupId, groupId));
 
 export async function createGroup(_prev: Result, formData: FormData): Promise<Result> {
+  const input = { name: String(formData.get('name') ?? ''), members: String(formData.get('members') ?? '') };
   const parsed = groupInput.safeParse({
-    name: String(formData.get('name') ?? ''),
-    members: String(formData.get('members') ?? '')
+    name: input.name,
+    members: input.members
       .split('\n')
       .map((s) => s.trim())
       .filter(Boolean),
   });
-  if (!parsed.success) return { error: firstError(parsed.error) };
+  if (!parsed.success) return { error: firstError(parsed.error), input };
   const id = randomBytes(16).toString('base64url');
   await db.transaction(async (tx) => {
     await tx.insert(groups).values({ id, name: parsed.data.name });
@@ -30,25 +34,31 @@ export async function createGroup(_prev: Result, formData: FormData): Promise<Re
   redirect(`/g/${id}`);
 }
 
-export async function addMember(groupId: string, formData: FormData): Promise<void> {
-  const name = memberName.safeParse(String(formData.get('name') ?? ''));
-  if (!name.success) return;
+export async function addMember(groupId: string, _prev: Result, formData: FormData): Promise<Result> {
+  const input = { name: String(formData.get('name') ?? '') };
+  const name = memberName.safeParse(input.name);
+  if (!name.success) return { error: firstError(name.error), input };
   const existing = await groupMembers(groupId);
-  if (existing.some((m) => m.name.toLowerCase() === name.data.toLowerCase())) return;
+  if (existing.some((m) => m.name.toLowerCase() === name.data.toLowerCase())) return { error: 'Tên thành viên bị trùng', input };
   await db.insert(members).values({ groupId, name: name.data });
   revalidatePath(`/g/${groupId}`);
+  return undefined;
 }
 
-export async function renameMember(groupId: string, memberId: number, formData: FormData): Promise<void> {
-  const name = memberName.safeParse(String(formData.get('name') ?? ''));
-  if (!name.success) return;
+export async function renameMember(groupId: string, memberId: number, _prev: Result, formData: FormData): Promise<Result> {
+  const input = { name: String(formData.get('name') ?? '') };
+  const name = memberName.safeParse(input.name);
+  if (!name.success) return { error: firstError(name.error), input };
   const existing = await groupMembers(groupId);
-  if (existing.some((m) => m.id !== memberId && m.name.toLowerCase() === name.data.toLowerCase())) return;
+  if (existing.some((m) => m.id !== memberId && m.name.toLowerCase() === name.data.toLowerCase())) {
+    return { error: 'Tên thành viên bị trùng', input };
+  }
   await db
     .update(members)
     .set({ name: name.data })
     .where(and(eq(members.id, memberId), eq(members.groupId, groupId)));
   revalidatePath(`/g/${groupId}`);
+  return undefined;
 }
 
 export async function deleteMember(groupId: string, memberId: number): Promise<void> {
@@ -107,6 +117,10 @@ export async function deleteExpense(groupId: string, expenseId: number): Promise
 }
 
 export async function recordPayment(groupId: string, from: number, to: number, amount: number): Promise<void> {
+  // ignore stale/double submits: only record a transfer that is still owed
+  // ponytail: check-then-insert is not atomic; two truly simultaneous requests can still both pass
+  const data = await getGroup(groupId);
+  if (!data || !isOwed(data.expenses, { from, to, amount })) redirect(`/g/${groupId}?tab=balances`);
   const res = await writeExpense(groupId, null, {
     title: 'Thanh toán',
     amount,
