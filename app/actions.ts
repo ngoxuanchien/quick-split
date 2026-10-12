@@ -8,6 +8,7 @@ import { db } from '@/db';
 import { getGroup } from '@/db/queries';
 import { expenses, expenseSplits, groups, members } from '@/db/schema';
 import { isOwed } from '@/lib/split';
+import { PAYMENT_TITLE } from '@/lib/summary';
 import { groupPath } from '@/lib/routes';
 import { expenseInput, firstError, groupInput, memberName, type ExpenseInput } from '@/lib/validation';
 
@@ -123,7 +124,7 @@ export async function recordPayment(groupId: string, from: number, to: number, a
   const data = await getGroup(groupId);
   if (!data || !isOwed(data.expenses, { from, to, amount })) redirect(groupPath(groupId, 'balances'));
   const res = await writeExpense(groupId, null, {
-    title: 'Thanh toán',
+    title: PAYMENT_TITLE,
     amount,
     payerId: from,
     splitType: 'exact',
