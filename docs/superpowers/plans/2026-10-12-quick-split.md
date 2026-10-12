@@ -14,7 +14,7 @@
 
 - All UI copy is Vietnamese. `<html lang="vi">`.
 - Money is integer VND (đồng), stored as Postgres `bigint` (`mode: 'number'`), formatted with `Intl.NumberFormat('vi-VN')` + `"đ"`.
-- Max amount `1_000_000_000_000` (1 nghìn tỷ); max shares per member `1000`. Keeps `amount * shares` far below `Number.MAX_SAFE_INTEGER`.
+- Max amount `1_000_000_000_000` (1 trillion); max shares per member `1000`. Keeps `amount * shares` far below `Number.MAX_SAFE_INTEGER`.
 - Group id = `crypto.randomBytes(16).toString('base64url')` (22 chars). No `nanoid` dependency.
 - Every Server Action that takes a member id or expense id must scope its query by `groupId` (anyone can call actions with arbitrary args).
 - A group always keeps at least 2 members.
@@ -928,10 +928,10 @@ Expected: no errors.
 - [ ] **Step 10: Manual check**
 
 Run `npm run dev` (background), then in a browser at `http://localhost:3000`:
-1. Submit with one member → shows "Cần ít nhất 2 thành viên".
+1. Submit with one member → shows "Cần ít nhất 2 thành viên" (At least 2 members required).
 2. Submit "Test" with `An`, `Bình`, `Chi` → redirects to `/g/<22-char id>`, header shows "Test".
-3. Tab "Thành viên": rename Chi → "Chi Ng", add "Dũng", delete "Dũng" → each persists after reload. With only 2 members left, "Xoá" is disabled.
-4. `http://localhost:3000/g/doesnotexist` → "Không tìm thấy nhóm này".
+3. Tab "Thành viên" (Members): rename Chi → "Chi Ng", add "Dũng", delete "Dũng" → each persists after reload. With only 2 members left, "Xoá" (Delete) is disabled.
+4. `http://localhost:3000/g/doesnotexist` → "Không tìm thấy nhóm này" (Group not found).
 
 - [ ] **Step 11: Commit**
 
@@ -1252,9 +1252,9 @@ Expected: no errors, all tests PASS.
 - [ ] **Step 6: Manual check**
 
 With `npm run dev` running, in the group from Task 4 (members An, Bình, Chi Ng):
-1. Add "Ăn tối" 300000, An trả, Chia đều cả 3 → preview shows 100.000đ each; list shows it.
-2. Add "Taxi" typed as `100.000`, Bình trả, Theo phần An=2 Bình=1 Chi=1 → preview 50.000đ / 25.000đ / 25.000đ.
-3. Add "Cafe" 90000, Chi trả, Theo số tiền An=30000 Bình=30000 Chi=20000 → red "Tổng chia: 80.000đ / 90.000đ"; clicking Lưu shows "Tổng chia (80.000đ) phải bằng số tiền (90.000đ)"; change Chi to 30000 → saves.
+1. Add "Ăn tối" 300000, paid by An, "Chia đều" (equal split) among all 3 → preview shows 100.000đ each; list shows it.
+2. Add "Taxi" typed as `100.000`, paid by Bình, "Theo phần" (by shares) An=2 Bình=1 Chi=1 → preview 50.000đ / 25.000đ / 25.000đ.
+3. Add "Cafe" 90000, paid by Chi, "Theo số tiền" (exact amounts) An=30000 Bình=30000 Chi=20000 → red "Tổng chia: 80.000đ / 90.000đ"; clicking "Lưu" (Save) shows "Tổng chia (80.000đ) phải bằng số tiền (90.000đ)"; change Chi to 30000 → saves.
 4. Open "Taxi", change amount to 120000 → list shows 120.000đ.
 5. Delete "Taxi" → confirm dialog; Cancel keeps it, OK removes it.
 
@@ -1355,10 +1355,10 @@ Expected: no errors, all tests PASS.
 
 - [ ] **Step 4: Manual check**
 
-With the expenses left from Task 5 (Ăn tối 300.000 An trả chia đều 3; Cafe 90.000 Chi trả 30.000 each):
+With the expenses left from Task 5 ("Ăn tối" 300.000 paid by An, split equally among 3; "Cafe" 90.000 paid by Chi, 30.000 each):
 - Expected balances: An +170.000đ, Bình −130.000đ, Chi Ng −40.000đ.
 - Settle list: "Bình → An 130.000đ", "Chi Ng → An 40.000đ".
-- Click "Đã trả" on both → stays on Số dư tab, all balances 0đ, "Mọi người đã cân bằng 🎉"; Khoản chi tab shows two "Thanh toán" entries.
+- Click "Đã trả" (Paid) on both → stays on the "Số dư" (Balances) tab, all balances 0đ, "Mọi người đã cân bằng 🎉"; the "Khoản chi" (Expenses) tab shows two "Thanh toán" (Payment) entries.
 
 - [ ] **Step 5: Commit**
 
@@ -1379,9 +1379,9 @@ git commit -m "feat: show balances, settle-up list and record payments"
 ````markdown
 # Quick Split
 
-Chia tiền nhóm nhanh: tạo nhóm, gửi link, ai có link cũng thêm khoản chi được. Hỗ trợ chia đều, theo số tiền, theo phần; tính số dư và cách trả nợ ít giao dịch.
+Fast group expense splitting: create a group, send the link, and anyone with the link can add expenses. Supports equal, exact-amount and share-based splits; computes balances and a settle-up plan with the fewest transfers.
 
-## Chạy local
+## Run locally
 
 ```bash
 docker run -d --name quick-split-pg -e POSTGRES_PASSWORD=pg -e POSTGRES_DB=quicksplit -p 5432:5432 postgres:17
@@ -1395,11 +1395,11 @@ Test: `npm test`
 
 ## Deploy (Vercel + Neon)
 
-1. Tạo project trên https://neon.tech, copy **pooled** connection string (có `-pooler` và `?sslmode=require`).
-2. Tạo bảng: `DATABASE_URL='<neon-url>' npx drizzle-kit push`
-3. Push repo lên GitHub, import vào https://vercel.com/new, thêm env `DATABASE_URL=<neon-url>`, Deploy.
+1. Create a project at https://neon.tech and copy the **pooled** connection string (contains `-pooler` and `?sslmode=require`).
+2. Create the tables: `DATABASE_URL='<neon-url>' npx drizzle-kit push`
+3. Push the repo to GitHub, import it at https://vercel.com/new, add env `DATABASE_URL=<neon-url>`, Deploy.
 
-Lưu ý: ai có link nhóm đều sửa được dữ liệu, đừng đăng link công khai.
+Note: anyone with a group link can edit its data, so don't post the link publicly.
 ````
 
 - [ ] **Step 2: Production build**

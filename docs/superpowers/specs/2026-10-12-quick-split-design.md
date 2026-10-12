@@ -13,7 +13,7 @@ shows each member's balance and a minimal list of transfers to settle up.
 In:
 - Create group (name + members), share via unguessable link, no login.
 - Expenses with 3 split types: equal (among selected), exact amounts, shares.
-- Balances + simplified settle-up list + "Đã trả" (record a payment).
+- Balances + simplified settle-up list + "Đã trả" ("Paid", records a payment).
 - Vietnamese UI, mobile-first, VND only (integer đồng).
 - Deploy on Vercel, data in Neon Postgres.
 
@@ -56,10 +56,10 @@ A settle-up payment from A to B is stored as an expense: `title='Thanh toán'`,
   On submit → redirect `/g/[id]`.
 - `/g/[id]` — group page (Server Component reading DB), header with group name and
   "Copy link" button, three tabs:
-  - **Khoản chi**: expenses newest first; each with edit link and delete button.
-  - **Số dư**: per-member balance (green = được nhận, red = đang nợ) and settle list
-    "A → B: 150.000đ" each with "Đã trả" button that records a payment.
-  - **Thành viên**: add member, rename member. A member referenced by any
+  - **Khoản chi** (Expenses): expenses newest first; each with edit link and delete button.
+  - **Số dư** (Balances): per-member balance (green = is owed, red = owes) and settle list
+    "A → B: 150.000đ" each with a "Đã trả" (Paid) button that records a payment.
+  - **Thành viên** (Members): add member, rename member. A member referenced by any
     expense (as payer or split) cannot be deleted; others can, as long as the group keeps ≥ 2 members.
 - `/g/[id]/expense/new`, `/g/[id]/expense/[eid]` — expense form: title, amount, payer,
   split type tabs (equal: checkboxes; exact: amount per member; shares: shares per

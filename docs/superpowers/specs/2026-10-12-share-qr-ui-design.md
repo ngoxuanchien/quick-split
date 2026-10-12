@@ -15,7 +15,7 @@ structure (3 tabs, same flows).
 In:
 - Optional bank (NAPAS BIN) + account number per member.
 - VietQR payload generated in-app (no external API), rendered as SVG.
-- Summary PNG route + "Chia sẻ ảnh" / "Tải ảnh" button.
+- Summary PNG route + "Chia sẻ ảnh" (Share image) / "Tải ảnh" (Download image) button.
 - UI polish: header stats, sticky tabs, letter avatars, FAB, empty states,
   balance bars, member cards, home page steps, dark mode (system preference).
 
@@ -61,15 +61,15 @@ Applied with `npm run db:push`.
 ### Bank account (Members tab)
 
 Each member is a card: avatar, name, "<bank code> · <account_no>" or
-"Chưa có STK". A `<details>` "Sửa" expands a form with name, bank `<select>`
+"Chưa có STK" (no account yet). A `<details>` "Sửa" (Edit) expands a form with name, bank `<select>`
 (+ empty option) and account input. The existing `renameMember` action is
 extended to `updateMember` (name + bank fields), validated in
 `lib/validation.ts`. Add-member form unchanged.
 
 ### VietQR (Balances tab)
 
-Each transfer card: avatar A → avatar B, amount, `[Hiện QR]` (only if B has
-an account) and `[Đã trả]` (now with a confirm prompt, reusing the existing
+Each transfer card: avatar A → avatar B, amount, `[Hiện QR]` (Show QR, only if B has
+an account) and `[Đã trả]` (Paid; now with a confirm prompt, reusing the existing
 `DeleteButton` confirm pattern). "Hiện QR" is a `<details>` that reveals the
 server-rendered SVG plus bank + account text. Note: `QuickSplit <group name>`.
 
@@ -78,26 +78,26 @@ server-rendered SVG plus bank + account text. Note: `QuickSplit <group name>`.
 `app/g/[id]/summary.png/route.tsx` — `GET` returns `ImageResponse`
 (`next/og`), 1080px wide, height grows with row count. Fresh data per request
 (`dynamic = 'force-dynamic'`), 404 for unknown group. Content: group name,
-total, export date; balances (green +, red −); "Cách trả nợ" rows with small
-QR + bank/account when available; "Mọi người đã cân bằng 🎉" if empty.
+total, export date; balances (green +, red −); "Cách trả nợ" (How to settle up) rows with small
+QR + bank/account when available; "Mọi người đã cân bằng 🎉" (Everyone is settled) if empty.
 Font: Be Vietnam Pro Regular + Bold TTF committed to `assets/fonts/`, read
 with `fs` (no runtime font fetch).
 
 `app/g/[id]/share-image.tsx` (client): fetches the PNG as a Blob. If
 `navigator.canShare({ files })` → label "Chia sẻ ảnh", opens the native share
 sheet; else label "Tải ảnh", downloads `quick-split-<group>.png`. States:
-idle / "Đang tạo…" / "Lỗi, thử lại". Placed at top of Balances tab.
+idle / "Đang tạo…" (Generating…) / "Lỗi, thử lại" (Error, try again). Placed at top of Balances tab.
 
 ### UI polish
 
-- Header: group name + "N người · Tổng chi X"; Copy link becomes icon+text.
+- Header: group name + "N người · Tổng chi X" (N people · Total spent X); Copy link becomes icon+text.
 - Tabs sticky at top; active tab emerald.
 - Avatars in expenses, balances, members.
 - Expenses: full-width add button replaced by a FAB (bottom-right) on mobile,
-  inline button on wide screens; "Thanh toán" entries styled muted with ↔;
+  inline button on wide screens; "Thanh toán" (Payment) entries styled muted with ↔;
   empty state with icon, hint and add button.
 - Balances: per-member horizontal bar (CSS width ∝ |balance| / max).
-- Home: 3 short steps (Tạo nhóm → Gửi link → Chia tiền), restyled form.
+- Home: 3 short steps (Tạo nhóm → Gửi link → Chia tiền: Create group → Send link → Split costs), restyled form.
 - Dark mode via `prefers-color-scheme`: `dark:` variants, extending
   existing `.card` / `.btn` / `.input` in `globals.css`.
 

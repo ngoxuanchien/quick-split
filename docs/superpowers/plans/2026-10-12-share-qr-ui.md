@@ -15,7 +15,7 @@
 - Read `node_modules/next/dist/docs/` before using a Next API you are unsure of (AGENTS.md: this Next has breaking changes).
 - `cacheComponents: true` → `export const dynamic`/`revalidate` are NOT allowed. Use `await connection()` from `next/server` to force per-request rendering.
 - `ImageResponse` from `next/og`: fonts must be `ttf`/`otf`/`woff` (no woff2); only flexbox layout; every `<div>` with more than one child needs `display: 'flex'`.
-- No emoji and no `→` in the PNG (fonts lack the glyphs; Satori would fetch fallbacks from the network). Use words ("trả").
+- No emoji and no `→` in the PNG (fonts lack the glyphs; Satori would fetch fallbacks from the network). Use words ("trả" = pays).
 - Only new runtime dependency: `qrcode`. No icon library, no animation library.
 - VietQR note: diacritics removed, only `[A-Za-z0-9 ]`, max 25 chars, text `QuickSplit <group name>`.
 - Account number: 6–19 digits after stripping spaces, dots, dashes. Bank and account: both set or both empty.
@@ -25,7 +25,7 @@
 
 ## Review Focus
 
-1. **iOS Safari share after an `await fetch`** loses user activation → `navigator.share` throws `NotAllowedError`. Expected: button keeps the fetched file and shows "Bấm lại để chia sẻ"; the next tap shares instantly. (Task 6, `share-image.tsx`)
+1. **iOS Safari share after an `await fetch`** loses user activation → `navigator.share` throws `NotAllowedError`. Expected: button keeps the fetched file and shows "Bấm lại để chia sẻ" (Tap again to share); the next tap shares instantly. (Task 6, `share-image.tsx`)
 2. **Group name with diacritics/emoji/symbols only** (e.g. `🎉🎉`, `Đà Lạt!!!`) → QR note becomes `QuickSplit` / `QuickSplit Da Lat`, never invalid; download filename falls back to `quick-split-nhom.png`. (Task 1 tests, Task 6 `fileName`)
 3. **Account typed with spaces/dots** (`0123 456.789`) → saved as `0123456789`; letters → Vietnamese error, form keeps typed values. (Task 4 tests)
 4. **Many members/transfers** (e.g. 20 members, 19 transfers with QR) → PNG height grows, nothing clipped. (Task 6 manual check with a seeded group)
@@ -444,7 +444,7 @@ Change `{tab === 'balances' && <BalancesTab data={data} />}` to `{tab === 'balan
 - [ ] **Step 6: Verify**
 
 Run: `npm test && npm run lint && npx tsc --noEmit`
-Expected: all pass. Then `npm run dev`, open a group at 375px wide in light and dark (`prefers-color-scheme` emulation): header shows "N người · Tổng chi …", tabs stick when scrolling, cards readable in dark.
+Expected: all pass. Then `npm run dev`, open a group at 375px wide in light and dark (`prefers-color-scheme` emulation): header shows "N người · Tổng chi …" (N people · Total spent …), tabs stick when scrolling, cards readable in dark.
 
 - [ ] **Step 7: Commit**
 
@@ -644,7 +644,7 @@ function MembersTab({ data }: { data: GroupData }) {
 - [ ] **Step 9: Verify**
 
 Run: `npm test && npm run lint && npx tsc --noEmit`
-Expected: pass. In the browser (dev): Members tab → Sửa → pick HDBank, type `0123 456 789` → Lưu → card shows `HDBank · 0123456789`. Type `12ab` → error "Số tài khoản gồm 6–19 chữ số" and the typed value stays. Clear both → "Chưa có STK".
+Expected: pass. In the browser (dev): Members tab → "Sửa" (Edit) → pick HDBank, type `0123 456 789` → "Lưu" (Save) → card shows `HDBank · 0123456789`. Type `12ab` → error "Số tài khoản gồm 6–19 chữ số" (Account number must be 6–19 digits) and the typed value stays. Clear both → "Chưa có STK" (no account yet).
 
 - [ ] **Step 10: Commit**
 
@@ -832,7 +832,7 @@ Remove anything in the file that is now unused (e.g. the `bal`/`transfers` lines
 - [ ] **Step 8: Verify**
 
 Run: `npm test && npm run lint && npx tsc --noEmit`
-Expected: pass. In dev: give the receiver of a transfer an account (Task 4) → Balances tab shows "Hiện QR chuyển khoản"; open it → QR visible on white background in dark mode too. **Scan the QR with a real banking app**: receiver, amount and note `QuickSplit <name>` pre-filled (do not complete the transfer). "Đã trả" asks for confirmation; Cancel does nothing.
+Expected: pass. In dev: give the receiver of a transfer an account (Task 4) → Balances tab shows "Hiện QR chuyển khoản" (Show transfer QR); open it → QR visible on white background in dark mode too. **Scan the QR with a real banking app**: receiver, amount and note `QuickSplit <name>` pre-filled (do not complete the transfer). "Đã trả" (Paid) asks for confirmation; Cancel does nothing.
 
 - [ ] **Step 9: Commit**
 
@@ -1054,7 +1054,7 @@ Expected: pass. Then:
 find .next -path '*summary.png*' -name '*.nft.json' | xargs grep -l BeVietnamPro
 ```
 Expected: one matching file (fonts are traced). If none, check the `outputFileTracingIncludes` key against `node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/output.md` and fix.
-In dev on desktop Chrome: Balances → "⬇️ Tải ảnh tổng kết" downloads `quick-split-<name>.png`. With mobile emulation the label may still be "Tải" (emulation doesn't add `canShare`) — that's fine; real-phone share is a manual check in Task 8.
+In dev on desktop Chrome: Balances → "⬇️ Tải ảnh tổng kết" (Download summary image) downloads `quick-split-<name>.png`. With mobile emulation the label may still be "Tải" (Download) (emulation doesn't add `canShare`) — that's fine; real-phone share is a manual check in Task 8.
 
 - [ ] **Step 9: Commit**
 
@@ -1172,7 +1172,7 @@ export default function Home() {
 - [ ] **Step 4: Verify**
 
 Run: `npm test && npm run lint && npx tsc --noEmit`
-Expected: pass. Then `grep -rn "text-gray-[56]00" app` → no matches outside `globals.css`. In dev at 375px: FAB visible bottom-right and does not cover the last expense (bottom padding); at ≥640px the inline button shows and FAB is hidden; empty group shows the 🧾 empty state; a recorded payment shows as a muted "↔ A đã trả B" row; home shows 3 steps. Check light and dark.
+Expected: pass. Then `grep -rn "text-gray-[56]00" app` → no matches outside `globals.css`. In dev at 375px: FAB visible bottom-right and does not cover the last expense (bottom padding); at ≥640px the inline button shows and FAB is hidden; empty group shows the 🧾 empty state; a recorded payment shows as a muted "↔ A đã trả B" (A paid B) row; home shows 3 steps. Check light and dark.
 
 - [ ] **Step 5: Commit**
 
@@ -1191,19 +1191,19 @@ git commit -m "feat: polish expenses tab, home page and expense form"
 - [ ] **Step 1: README** — after the first paragraph add:
 
 ```markdown
-Tính năng chia sẻ: thành viên có thể lưu ngân hàng + số tài khoản để hiện mã VietQR (điền sẵn số tiền) ở tab Số dư; nút "Chia sẻ/Tải ảnh tổng kết" xuất PNG số dư + cách trả nợ để gửi vào Zalo/Messenger.
+Sharing: members can save a bank + account number to show a VietQR code (amount pre-filled) on the Balances tab; the "Share/Download summary image" button exports a PNG of balances + settle-up transfers to send via Zalo/Messenger.
 ```
 
-And in the "Lưu ý" line append: ` Số tài khoản đã lưu cũng hiện với mọi người có link.`
+And in the "Note" line append: ` Saved account numbers are also visible to everyone with the link.`
 
-Under "Deploy" step 2 add: `Khi nâng cấp từ bản cũ: chạy lại lệnh này để thêm cột ngân hàng/STK.`
+Under "Deploy" step 2 add: `When upgrading from an older version: rerun this command to add the bank/account columns.`
 
 - [ ] **Step 2: Full check**
 
 Run: `npm test && npm run lint && npm run build`
 Expected: all pass, build lists `/g/[id]/summary.png` as a dynamic (ƒ) route.
 
-- [ ] **Step 3: Browser pass** (dev server, 375px and 1280px, light and dark): create group → add expenses → add bank account → Balances QR → Đã trả (confirm) → download image → open PNG. Note anything off and fix before committing.
+- [ ] **Step 3: Browser pass** (dev server, 375px and 1280px, light and dark): create group → add expenses → add bank account → Balances QR → "Đã trả" (Paid, confirm) → download image → open PNG. Note anything off and fix before committing.
 
 - [ ] **Step 4: Manual on a real phone (report to user, cannot be automated):** share button opens the native share sheet and the image lands in Zalo; QR scans in a banking app with correct receiver/amount/note.
 
