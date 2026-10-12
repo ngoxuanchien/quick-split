@@ -3,14 +3,16 @@ import { db } from '.';
 import { expenses, expenseSplits, groups, members } from './schema';
 
 export async function getGroup(id: string) {
-  const [group] = await db.select().from(groups).where(eq(groups.id, id));
+  const [[group], mems, exps] = await Promise.all([
+    db.select().from(groups).where(eq(groups.id, id)),
+    db.select().from(members).where(eq(members.groupId, id)).orderBy(asc(members.id)),
+    db
+      .select()
+      .from(expenses)
+      .where(eq(expenses.groupId, id))
+      .orderBy(desc(expenses.createdAt), desc(expenses.id)),
+  ]);
   if (!group) return null;
-  const mems = await db.select().from(members).where(eq(members.groupId, id)).orderBy(asc(members.id));
-  const exps = await db
-    .select()
-    .from(expenses)
-    .where(eq(expenses.groupId, id))
-    .orderBy(desc(expenses.createdAt), desc(expenses.id));
   const splits = exps.length
     ? await db
         .select()

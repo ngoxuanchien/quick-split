@@ -8,6 +8,7 @@ import { db } from '@/db';
 import { getGroup } from '@/db/queries';
 import { expenses, expenseSplits, groups, members } from '@/db/schema';
 import { isOwed } from '@/lib/split';
+import { groupPath } from '@/lib/routes';
 import { expenseInput, firstError, groupInput, memberName, type ExpenseInput } from '@/lib/validation';
 
 // input echoes submitted text so forms can refill it (React 19 resets forms after an action)
@@ -31,7 +32,7 @@ export async function createGroup(_prev: Result, formData: FormData): Promise<Re
     await tx.insert(groups).values({ id, name: parsed.data.name });
     await tx.insert(members).values(parsed.data.members.map((name) => ({ groupId: id, name })));
   });
-  redirect(`/g/${id}`);
+  redirect(groupPath(id));
 }
 
 export async function addMember(groupId: string, _prev: Result, formData: FormData): Promise<Result> {
@@ -41,7 +42,7 @@ export async function addMember(groupId: string, _prev: Result, formData: FormDa
   const existing = await groupMembers(groupId);
   if (existing.some((m) => m.name.toLowerCase() === name.data.toLowerCase())) return { error: 'Tên thành viên bị trùng', input };
   await db.insert(members).values({ groupId, name: name.data });
-  revalidatePath(`/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
   return undefined;
 }
 
@@ -57,7 +58,7 @@ export async function renameMember(groupId: string, memberId: number, _prev: Res
     .update(members)
     .set({ name: name.data })
     .where(and(eq(members.id, memberId), eq(members.groupId, groupId)));
-  revalidatePath(`/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
   return undefined;
 }
 
@@ -72,7 +73,7 @@ export async function deleteMember(groupId: string, memberId: number): Promise<v
     .limit(1);
   if (paid || split) return;
   await db.delete(members).where(and(eq(members.id, memberId), eq(members.groupId, groupId)));
-  revalidatePath(`/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 }
 
 async function writeExpense(groupId: string, expenseId: number | null, input: ExpenseInput): Promise<Result> {
@@ -101,26 +102,26 @@ async function writeExpense(groupId: string, expenseId: number | null, input: Ex
     return true;
   });
   if (!found) return { error: 'Không tìm thấy khoản chi' };
-  revalidatePath(`/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
   return undefined;
 }
 
 export async function saveExpense(groupId: string, expenseId: number | null, input: ExpenseInput): Promise<Result> {
   const res = await writeExpense(groupId, expenseId, input);
   if (res) return res;
-  redirect(`/g/${groupId}`);
+  redirect(groupPath(groupId));
 }
 
 export async function deleteExpense(groupId: string, expenseId: number): Promise<void> {
   await db.delete(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
-  revalidatePath(`/g/${groupId}`);
+  revalidatePath(groupPath(groupId));
 }
 
 export async function recordPayment(groupId: string, from: number, to: number, amount: number): Promise<void> {
   // ignore stale/double submits: only record a transfer that is still owed
   // ponytail: check-then-insert is not atomic; two truly simultaneous requests can still both pass
   const data = await getGroup(groupId);
-  if (!data || !isOwed(data.expenses, { from, to, amount })) redirect(`/g/${groupId}?tab=balances`);
+  if (!data || !isOwed(data.expenses, { from, to, amount })) redirect(groupPath(groupId, 'balances'));
   const res = await writeExpense(groupId, null, {
     title: 'Thanh toán',
     amount,
@@ -129,5 +130,5 @@ export async function recordPayment(groupId: string, from: number, to: number, a
     splits: [{ memberId: to, value: amount }],
   });
   if (res) throw new Error(res.error); // only reachable with tampered args
-  redirect(`/g/${groupId}?tab=balances`);
+  redirect(groupPath(groupId, 'balances'));
 }

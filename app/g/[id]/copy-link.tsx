@@ -2,19 +2,26 @@
 
 import { useState } from 'react';
 
+const LABEL = { idle: 'Copy link', copied: 'Đã copy ✓', failed: 'Copy lỗi, hãy copy URL' };
+
 export function CopyLink() {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<keyof typeof LABEL>('idle');
   return (
     <button
       type="button"
       className="shrink-0 rounded-lg border border-gray-300 px-3 py-1 text-sm"
       onClick={async () => {
-        await navigator.clipboard.writeText(location.origin + location.pathname);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
+        try {
+          // navigator.clipboard is undefined outside secure contexts (e.g. http://<LAN IP>)
+          await navigator.clipboard.writeText(location.origin + location.pathname);
+          setStatus('copied');
+        } catch {
+          setStatus('failed');
+        }
+        setTimeout(() => setStatus('idle'), 2000);
       }}
     >
-      {copied ? 'Đã copy ✓' : 'Copy link'}
+      {LABEL[status]}
     </button>
   );
 }

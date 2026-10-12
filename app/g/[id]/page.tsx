@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { addMember, deleteExpense, deleteMember, recordPayment, renameMember } from '@/app/actions';
 import { getGroup, type GroupData } from '@/db/queries';
+import { formatDateVn } from '@/lib/date';
 import { formatVnd } from '@/lib/money';
+import { expensePath, groupPath } from '@/lib/routes';
 import { balances, settle } from '@/lib/split';
 import { CopyLink } from './copy-link';
 import { DeleteButton } from './delete-button';
@@ -40,7 +42,7 @@ export default async function GroupPage({
         {TABS.map(([key, label]) => (
           <Link
             key={key}
-            href={`/g/${id}?tab=${key}`}
+            href={groupPath(id, key)}
             className={`rounded-md py-1.5 ${tab === key ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
           >
             {label}
@@ -52,6 +54,18 @@ export default async function GroupPage({
       {tab !== 'members' && tab !== 'balances' && <ExpensesTab data={data} />}
     </div>
   );
+}
+
+function deleteHint(used: boolean, minReached: boolean) {
+  if (used) return 'Đã có khoản chi, không xoá được';
+  if (minReached) return 'Nhóm cần ít nhất 2 người';
+  return undefined;
+}
+
+function balanceClass(v: number) {
+  if (v > 0) return 'text-emerald-700';
+  if (v < 0) return 'text-red-600';
+  return 'text-gray-500';
 }
 
 function MembersTab({ data }: { data: GroupData }) {
@@ -73,7 +87,7 @@ function MembersTab({ data }: { data: GroupData }) {
             <form action={deleteMember.bind(null, id, m.id)} className="pt-2">
               <button
                 disabled={locked}
-                title={used.has(m.id) ? 'Đã có khoản chi, không xoá được' : minReached ? 'Nhóm cần ít nhất 2 người' : undefined}
+                title={deleteHint(used.has(m.id), minReached)}
                 className="text-sm text-red-600 disabled:text-gray-300"
               >
                 Xoá
@@ -94,16 +108,16 @@ function ExpensesTab({ data }: { data: GroupData }) {
   const name = new Map(data.members.map((m) => [m.id, m.name]));
   return (
     <div className="space-y-3">
-      <Link href={`/g/${id}/expense/new`} className="btn block text-center">
+      <Link href={expensePath(id, 'new')} className="btn block text-center">
         + Thêm khoản chi
       </Link>
       {data.expenses.length === 0 && <p className="text-center text-gray-500">Chưa có khoản chi nào.</p>}
       {data.expenses.map((e) => (
         <div key={e.id} className="card flex items-center gap-3">
-          <Link href={`/g/${id}/expense/${e.id}`} className="min-w-0 flex-1">
+          <Link href={expensePath(id, e.id)} className="min-w-0 flex-1">
             <div className="truncate font-medium">{e.title}</div>
             <div className="text-sm text-gray-500">
-              {name.get(e.payerId)} trả · {e.createdAt.toLocaleDateString('vi-VN')}
+              {name.get(e.payerId)} trả · {formatDateVn(e.createdAt)}
             </div>
           </Link>
           <div className="font-semibold">{formatVnd(e.amount)}</div>
@@ -127,7 +141,7 @@ function BalancesTab({ data }: { data: GroupData }) {
           return (
             <div key={m.id} className="flex justify-between">
               <span>{m.name}</span>
-              <span className={v > 0 ? 'text-emerald-700' : v < 0 ? 'text-red-600' : 'text-gray-500'}>
+              <span className={balanceClass(v)}>
                 {v > 0 ? '+' : ''}
                 {formatVnd(v)}
               </span>

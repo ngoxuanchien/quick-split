@@ -39,12 +39,11 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
   const [pending, startTransition] = useTransition();
 
   const amount = parseVnd(amountText);
+  const typed = splitType === 'exact' ? exact : shares;
   const splits: Split[] =
     splitType === 'equal'
       ? members.filter((m) => equal[m.id]).map((m) => ({ memberId: m.id, value: 1 }))
-      : members
-          .map((m) => ({ memberId: m.id, value: parseVnd((splitType === 'exact' ? exact : shares)[m.id] ?? '') }))
-          .filter((s) => s.value > 0);
+      : members.map((m) => ({ memberId: m.id, value: parseVnd(typed[m.id] ?? '') })).filter((s) => s.value > 0);
   const owed = computeShares(amount, splitType, splits);
   const exactSum = splits.reduce((a, s) => a + s.value, 0);
 
