@@ -105,3 +105,15 @@ export async function deleteExpense(groupId: string, expenseId: number): Promise
   await db.delete(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
   revalidatePath(`/g/${groupId}`);
 }
+
+export async function recordPayment(groupId: string, from: number, to: number, amount: number): Promise<void> {
+  const res = await writeExpense(groupId, null, {
+    title: 'Thanh toán',
+    amount,
+    payerId: from,
+    splitType: 'exact',
+    splits: [{ memberId: to, value: amount }],
+  });
+  if (res) throw new Error(res.error); // only reachable with tampered args
+  redirect(`/g/${groupId}?tab=balances`);
+}

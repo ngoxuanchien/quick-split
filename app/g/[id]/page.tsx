@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addMember, deleteExpense, deleteMember, renameMember } from '@/app/actions';
+import { addMember, deleteExpense, deleteMember, recordPayment, renameMember } from '@/app/actions';
 import { getGroup, type GroupData } from '@/db/queries';
 import { formatVnd } from '@/lib/money';
+import { balances, settle } from '@/lib/split';
 import { CopyLink } from './copy-link';
 import { DeleteButton } from './delete-button';
 
@@ -45,7 +46,7 @@ export default async function GroupPage({
         ))}
       </nav>
       {tab === 'members' && <MembersTab data={data} />}
-      {tab === 'balances' && <p>Số dư (Task 6)</p>}
+      {tab === 'balances' && <BalancesTab data={data} />}
       {tab !== 'members' && tab !== 'balances' && <ExpensesTab data={data} />}
     </div>
   );
@@ -104,6 +105,44 @@ function ExpensesTab({ data }: { data: GroupData }) {
           </Link>
           <div className="font-semibold">{formatVnd(e.amount)}</div>
           <DeleteButton action={deleteExpense.bind(null, id, e.id)} confirmText={`Xoá "${e.title}"?`} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BalancesTab({ data }: { data: GroupData }) {
+  const id = data.group.id;
+  const name = new Map(data.members.map((m) => [m.id, m.name]));
+  const bal = balances(data.expenses);
+  const transfers = settle(bal);
+  return (
+    <div className="space-y-4">
+      <div className="card space-y-2">
+        {data.members.map((m) => {
+          const v = bal.get(m.id) ?? 0;
+          return (
+            <div key={m.id} className="flex justify-between">
+              <span>{m.name}</span>
+              <span className={v > 0 ? 'text-emerald-700' : v < 0 ? 'text-red-600' : 'text-gray-500'}>
+                {v > 0 ? '+' : ''}
+                {formatVnd(v)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <h2 className="font-semibold">Cách trả nợ</h2>
+      {transfers.length === 0 && <p className="text-gray-500">Mọi người đã cân bằng 🎉</p>}
+      {transfers.map((t) => (
+        <div key={`${t.from}-${t.to}`} className="card flex items-center gap-3">
+          <div className="flex-1">
+            <b>{name.get(t.from)}</b> → <b>{name.get(t.to)}</b>
+            <div className="font-semibold">{formatVnd(t.amount)}</div>
+          </div>
+          <form action={recordPayment.bind(null, id, t.from, t.to, t.amount)}>
+            <button className="btn">Đã trả</button>
+          </form>
         </div>
       ))}
     </div>
