@@ -14,16 +14,17 @@ const font = (w: string) => readFile(join(process.cwd(), `assets/fonts/BeVietnam
 let fonts: ReturnType<typeof loadFonts> | undefined;
 const loadFonts = () => Promise.all([font('Regular'), font('Bold')]);
 
-const GREEN = '#059669';
-const RED = '#dc2626';
+const BRAND = '#7c3aed';
+const ACCENT = '#db2777';
+const HERO = 'linear-gradient(135deg, #6d28d9, #a21caf 60%, #ec4899)';
 const GRAY = '#6b7280';
 const AMBER = '#b45309';
 // single line + ellipsis keeps every block a fixed height, so the image height below stays exact
 const ONE_LINE = { overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' } as const;
 
 function balanceColor(v: number) {
-  if (v > 0) return GREEN;
-  if (v < 0) return RED;
+  if (v > 0) return BRAND;
+  if (v < 0) return ACCENT;
   return GRAY;
 }
 
@@ -55,17 +56,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const [regular, bold] = await (fonts ??= loadFonts());
   // measured per block; text is single-line so no wrapping to account for
   const height =
-    400 +
+    464 +
     sum.rows.length * 64 +
     (sum.transfers.length ? sum.transfers.reduce((h, t, i) => h + transferHeight(!!qrs[i], !!t.account), 0) : 90) +
     (hasQr ? 70 : 0);
 
   return new ImageResponse(
     (
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', padding: 56, background: '#f9fafb', color: '#111827', fontFamily: 'BeVietnamPro', fontSize: 30 }}>
-        <div style={{ ...ONE_LINE, display: 'flex', flexShrink: 0, fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
-        <div style={{ display: 'flex', flexShrink: 0, marginTop: 8, color: GRAY }}>
-          {`${data.members.length} người · Tổng chi ${formatVnd(sum.total)} · ${formatDateVn(new Date())}`}
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', padding: 56, background: '#f7f5ff', color: '#1e1b4b', fontFamily: 'BeVietnamPro', fontSize: 30 }}>
+        <div style={{ display: 'flex', flexShrink: 0, flexDirection: 'column', padding: '32px 36px', borderRadius: 32, backgroundImage: HERO, color: '#fff' }}>
+          <div style={{ ...ONE_LINE, display: 'flex', fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
+          <div style={{ display: 'flex', marginTop: 8, color: 'rgba(255,255,255,0.85)' }}>
+            {`${data.members.length} người · Tổng chi ${formatVnd(sum.total)} · ${formatDateVn(new Date())}`}
+          </div>
         </div>
         <div style={{ display: 'flex', flexShrink: 0, flexDirection: 'column', marginTop: 32, padding: '16px 32px', background: '#fff', borderRadius: 24 }}>
           {sum.rows.map(({ member: m, balance: v }) => (
@@ -82,7 +85,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           <div key={`${t.from}-${t.to}`} style={{ display: 'flex', flexShrink: 0, alignItems: 'center', marginTop: 16, padding: 24, background: '#fff', borderRadius: 24 }}>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
               <div style={{ ...ONE_LINE, display: 'flex' }}>{`${name.get(t.from)} trả ${name.get(t.to)}`}</div>
-              <div style={{ display: 'flex', fontSize: 44, fontWeight: 700, color: GREEN }}>{formatVnd(t.amount)}</div>
+              <div style={{ display: 'flex', fontSize: 44, fontWeight: 700, color: ACCENT }}>{formatVnd(t.amount)}</div>
               {t.account && <div style={{ display: 'flex', color: GRAY, fontSize: 26 }}>{`${t.account.bank.name} · ${t.account.accountNo}`}</div>}
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element -- Satori only renders <img> */}
