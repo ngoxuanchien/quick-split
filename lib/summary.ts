@@ -1,10 +1,7 @@
 import { type Bank, bankByBin } from './banks';
-import { balances, type ExpenseLike, settle, type Split, type SplitType, type Transfer } from './split';
+import { balances, type ExpenseLike, isPayment, settle, type Transfer } from './split';
 
-export const PAYMENT_TITLE = 'Thanh toán';
-
-export const isPayment = (e: { title: string; splitType: SplitType; splits: Split[] }) =>
-  e.title === PAYMENT_TITLE && e.splitType === 'exact' && e.splits.length === 1;
+export { isPayment, PAYMENT_TITLE } from './split';
 
 export type SummaryMember = { id: number; name: string; bankBin?: string | null; accountNo?: string | null };
 export type SummaryTransfer = Transfer & { account?: { bank: Bank; accountNo: string } };

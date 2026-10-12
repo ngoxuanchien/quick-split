@@ -1,11 +1,13 @@
 import Link from 'next/link';
+import { getT } from '@/lib/i18n/server';
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getT();
   return (
     <div className="space-y-4 px-4 pt-8 text-center">
-      <p>Không tìm thấy nhóm này. Kiểm tra lại link.</p>
+      <p>{t.group.notFound}</p>
       <Link href="/" className="link underline">
-        Tạo nhóm mới
+        {t.group.newGroup}
       </Link>
     </div>
   );

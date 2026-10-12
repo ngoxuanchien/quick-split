@@ -4,7 +4,9 @@ import { ImageResponse } from 'next/og';
 import { connection } from 'next/server';
 import { getGroup } from '@/db/queries';
 import { avatarColor, initial } from '@/lib/avatar';
-import { formatDateVn } from '@/lib/date';
+import { formatDate } from '@/lib/date';
+import { dicts } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n/server';
 import { formatVnd } from '@/lib/money';
 import { transferQrs } from '@/lib/qr';
 import { summarize } from '@/lib/summary';
@@ -49,6 +51,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const data = await getGroup(id);
   if (!data) return new Response('Not found', { status: 404 });
+  const locale = await getLocale();
+  const tr = dicts[locale];
   const sum = summarize(data);
   const qrs = await transferQrs(data.group.name, sum.transfers);
   const hasQr = qrs.some(Boolean);
@@ -67,7 +71,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         <div style={{ display: 'flex', flexShrink: 0, flexDirection: 'column', padding: '32px 36px', borderRadius: 32, backgroundImage: HERO, color: '#fff' }}>
           <div style={{ ...ONE_LINE, display: 'flex', fontSize: 56, fontWeight: 700 }}>{data.group.name}</div>
           <div style={{ display: 'flex', marginTop: 8, color: 'rgba(255,255,255,0.85)' }}>
-            {`${data.members.length} người · Tổng chi ${formatVnd(sum.total)} · ${formatDateVn(new Date())}`}
+            {tr.image.stats(data.members.length, formatVnd(sum.total, locale), formatDate(new Date(), locale))}
           </div>
         </div>
         <div style={{ display: 'flex', flexShrink: 0, flexDirection: 'column', marginTop: 32, padding: '16px 32px', background: '#fff', borderRadius: 24 }}>
@@ -75,17 +79,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', height: 64 }}>
               <Dot id={m.id} name={m.name} />
               <div style={{ ...ONE_LINE, display: 'flex', flex: 1, marginLeft: 16, marginRight: 16 }}>{m.name}</div>
-              <div style={{ display: 'flex', fontWeight: 700, color: balanceColor(v) }}>{`${v > 0 ? '+' : ''}${formatVnd(v)}`}</div>
+              <div style={{ display: 'flex', fontWeight: 700, color: balanceColor(v) }}>{`${v > 0 ? '+' : ''}${formatVnd(v, locale)}`}</div>
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', flexShrink: 0, marginTop: 40, fontSize: 40, fontWeight: 700 }}>Cách trả nợ</div>
-        {sum.transfers.length === 0 && <div style={{ display: 'flex', flexShrink: 0, marginTop: 16, color: GRAY }}>Mọi người đã cân bằng.</div>}
+        <div style={{ display: 'flex', flexShrink: 0, marginTop: 40, fontSize: 40, fontWeight: 700 }}>{tr.balances.howToSettle}</div>
+        {sum.transfers.length === 0 && <div style={{ display: 'flex', flexShrink: 0, marginTop: 16, color: GRAY }}>{tr.image.settled}</div>}
         {sum.transfers.map((t, i) => (
           <div key={`${t.from}-${t.to}`} style={{ display: 'flex', flexShrink: 0, alignItems: 'center', marginTop: 16, padding: 24, background: '#fff', borderRadius: 24 }}>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-              <div style={{ ...ONE_LINE, display: 'flex' }}>{`${name.get(t.from)} trả ${name.get(t.to)}`}</div>
-              <div style={{ display: 'flex', fontSize: 44, fontWeight: 700, color: ACCENT }}>{formatVnd(t.amount)}</div>
+              <div style={{ ...ONE_LINE, display: 'flex' }}>{tr.image.pays(name.get(t.from) ?? '', name.get(t.to) ?? '')}</div>
+              <div style={{ display: 'flex', fontSize: 44, fontWeight: 700, color: ACCENT }}>{formatVnd(t.amount, locale)}</div>
               {t.account && <div style={{ display: 'flex', color: GRAY, fontSize: 26 }}>{`${t.account.bank.name} · ${t.account.accountNo}`}</div>}
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element -- Satori only renders <img> */}
@@ -94,7 +98,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         ))}
         {hasQr && (
           <div style={{ display: 'flex', flexShrink: 0, marginTop: 24, color: AMBER, fontSize: 24 }}>
-            Quét QR rồi kiểm tra đúng tên người nhận trên app ngân hàng trước khi chuyển.
+            {tr.image.footer}
           </div>
         )}
       </div>

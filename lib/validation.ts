@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import { bankByBin } from './banks';
-import { formatVnd } from './money';
+import type { Dict } from './i18n';
+import { MAX_AMOUNT, MAX_MEMBERS, MAX_SHARES } from './limits';
 
-// built-in zod messages (e.g. Infinity, int overflow) in Vietnamese
-z.config(z.locales.vi());
+export { MAX_AMOUNT, MAX_MEMBERS, MAX_SHARES };
 
-export const MAX_AMOUNT = 1_000_000_000_000;
-export const MAX_SHARES = 1000;
+export type ErrorKey = keyof Dict['errors'];
+// schema messages are dictionary keys; firstError translates them for the request's locale
+const k = (key: ErrorKey) => key;
 
-export const memberName = z.string().trim().min(1, 'Nhập tên thành viên').max(50, 'Tên tối đa 50 ký tự');
+export const memberName = z.string().trim().min(1, k('memberNameRequired')).max(50, k('memberNameTooLong'));
 
 export const memberAccount = z
   .object({
@@ -17,47 +18,52 @@ export const memberAccount = z
   })
   .superRefine((a, ctx) => {
     if (!a.bankBin && !a.accountNo) return;
-    if (!a.bankBin || !a.accountNo) ctx.addIssue({ code: 'custom', message: 'Nhập đủ ngân hàng và số tài khoản' });
-    else if (!bankByBin(a.bankBin)) ctx.addIssue({ code: 'custom', message: 'Ngân hàng không hợp lệ' });
-    else if (!/^\d{6,19}$/.test(a.accountNo)) ctx.addIssue({ code: 'custom', message: 'Số tài khoản gồm 6–19 chữ số' });
+    if (!a.bankBin || !a.accountNo) ctx.addIssue({ code: 'custom', message: k('accountIncomplete') });
+    else if (!bankByBin(a.bankBin)) ctx.addIssue({ code: 'custom', message: k('bankInvalid') });
+    else if (!/^\d{6,19}$/.test(a.accountNo)) ctx.addIssue({ code: 'custom', message: k('accountInvalid') });
   })
   .transform((a) => (a.bankBin && a.accountNo ? a : { bankBin: null, accountNo: null }));
 
 export const groupInput = z.object({
-  name: z.string().trim().min(1, 'Nhập tên nhóm').max(100, 'Tên nhóm tối đa 100 ký tự'),
+  name: z.string().trim().min(1, k('groupNameRequired')).max(100, k('groupNameTooLong')),
   members: z
     .array(memberName)
-    .min(2, 'Cần ít nhất 2 thành viên')
-    .max(50, 'Tối đa 50 thành viên')
-    .refine((a) => new Set(a.map((s) => s.toLowerCase())).size === a.length, 'Tên thành viên bị trùng'),
+    .min(2, k('minMembers'))
+    .max(MAX_MEMBERS, k('maxMembers'))
+    .refine((a) => new Set(a.map((s) => s.toLowerCase())).size === a.length, k('duplicateMemberName')),
 });
 
 export const expenseInput = z
   .object({
-    title: z.string().trim().min(1, 'Nhập tên khoản chi').max(100, 'Tên tối đa 100 ký tự'),
-    amount: z.number().max(MAX_AMOUNT, 'Số tiền quá lớn').int().positive('Số tiền phải lớn hơn 0'),
+    title: z.string().trim().min(1, k('titleRequired')).max(100, k('titleTooLong')),
+    amount: z.number().max(MAX_AMOUNT, k('amountTooLarge')).int().positive(k('amountPositive')),
     payerId: z.number().int(),
     splitType: z.enum(['equal', 'exact', 'shares']),
     splits: z
-      .array(z.object({ memberId: z.number().int(), value: z.number().max(MAX_AMOUNT, 'Giá trị chia quá lớn').int().positive() }))
-      .min(1, 'Chọn ít nhất 1 người'),
+      .array(z.object({ memberId: z.number().int(), value: z.number().max(MAX_AMOUNT, k('splitValueTooLarge')).int().positive() }))
+      .min(1, k('participantsRequired')),
   })
   .superRefine((e, ctx) => {
     const ids = e.splits.map((s) => s.memberId);
-    if (new Set(ids).size !== ids.length) ctx.addIssue({ code: 'custom', message: 'Thành viên bị trùng' });
+    if (new Set(ids).size !== ids.length) ctx.addIssue({ code: 'custom', message: k('duplicateParticipant') });
     if (e.splitType === 'shares' && e.splits.some((s) => s.value > MAX_SHARES)) {
-      ctx.addIssue({ code: 'custom', message: `Số phần tối đa ${MAX_SHARES}` });
+      ctx.addIssue({ code: 'custom', message: k('maxShares') });
     }
     if (e.splitType === 'exact') {
       const total = e.splits.reduce((a, s) => a + s.value, 0);
       if (total !== e.amount) {
-        ctx.addIssue({ code: 'custom', message: `Tổng chia (${formatVnd(total)}) phải bằng số tiền (${formatVnd(e.amount)})` });
+        ctx.addIssue({ code: 'custom', message: k('exactMismatch'), params: { total, amount: e.amount } });
       }
     }
   });
 
 export type ExpenseInput = z.infer<typeof expenseInput>;
 
-export function firstError(e: z.ZodError): string {
-  return e.issues[0]?.message ?? 'Dữ liệu không hợp lệ';
+// zod built-in messages (Infinity, wrong type; only reachable with tampered input) are not keys → generic message
+export function firstError(e: z.ZodError, t: Dict): string {
+  const issue = e.issues[0];
+  if (!issue || !Object.hasOwn(t.errors, issue.message)) return t.errors.invalid;
+  const msg = t.errors[issue.message as ErrorKey];
+  if (typeof msg === 'string') return msg;
+  return msg((issue as { params?: { total: number; amount: number } }).params!);
 }

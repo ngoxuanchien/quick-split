@@ -59,3 +59,10 @@ export function settle(bal: Map<number, number>): Transfer[] {
 export function isOwed(expenses: ExpenseLike[], t: Transfer): boolean {
   return settle(balances(expenses)).some((x) => x.from === t.from && x.to === t.to && x.amount === t.amount);
 }
+
+// settle-up payments are stored as expenses with this title (never translated: it is data)
+export const PAYMENT_TITLE = 'Thanh toán';
+
+export function isPayment(e: { title: string; splitType: SplitType; splits: Split[] }): boolean {
+  return e.title === PAYMENT_TITLE && e.splitType === 'exact' && e.splits.length === 1;
+}

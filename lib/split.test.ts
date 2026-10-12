@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { balances, computeShares, isOwed, settle, type ExpenseLike } from './split';
+import { balances, computeShares, isOwed, isPayment, PAYMENT_TITLE, settle, type ExpenseLike } from './split';
 
 const sum = (m: Map<number, number>) => [...m.values()].reduce((a, b) => a + b, 0);
 
@@ -84,5 +84,16 @@ describe('isOwed', () => {
   it('false once that payment is recorded (blocks double "Đã trả")', () => {
     const paid: ExpenseLike = { amount: 100, payerId: 2, splitType: 'exact', splits: [{ memberId: 1, value: 100 }] };
     expect(isOwed([dinner, paid], { from: 2, to: 1, amount: 100 })).toBe(false);
+  });
+});
+
+describe('isPayment', () => {
+  const pay = { title: PAYMENT_TITLE, splitType: 'exact' as const, splits: [{ memberId: 2, value: 100 }] };
+  it('detects a recorded settle-up payment', () => expect(isPayment(pay)).toBe(true));
+  it('does not relabel a user expense with the same title but an equal split', () => {
+    expect(isPayment({ ...pay, splitType: 'equal', splits: [{ memberId: 1, value: 1 }, { memberId: 2, value: 1 }] })).toBe(false);
+  });
+  it('needs exactly one split', () => {
+    expect(isPayment({ ...pay, splits: [{ memberId: 1, value: 50 }, { memberId: 2, value: 50 }] })).toBe(false);
   });
 });

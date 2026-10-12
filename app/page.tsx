@@ -1,8 +1,8 @@
+import { getT } from '@/lib/i18n/server';
 import { CreateGroupForm } from './create-group-form';
 
-const STEPS = ['① Tạo nhóm', '② Gửi link', '③ Quét QR'] as const;
-
-export default function Home() {
+export default async function Home() {
+  const t = await getT();
   return (
     <div className="relative pb-10 lg:pb-0">
       {/* gradient backdrop: a band behind the title on mobile, the whole screen on desktop */}
@@ -11,12 +11,12 @@ export default function Home() {
         <section className="text-white">
           <h1 className="text-3xl font-bold tracking-tight lg:text-5xl">Quick Split</h1>
           <p className="mt-1 text-white/85 lg:mt-3 lg:text-lg">
-            Chia tiền nhóm trong 1 phút.
+            {t.home.taglineTop}
             <br />
-            Không cần đăng nhập.
+            {t.home.taglineBottom}
           </p>
           <ul className="mt-4 flex flex-wrap gap-2 text-xs lg:mt-6 lg:text-sm">
-            {STEPS.map((s) => (
+            {t.home.steps.map((s) => (
               <li key={s} className="rounded-full bg-white/20 px-3 py-1.5 font-semibold">
                 {s}
               </li>

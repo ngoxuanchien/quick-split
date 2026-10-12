@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useSyncExternalStore } from 'react';
+import { useT } from '@/app/locale-provider';
 import { qrNote } from '@/lib/vietqr';
 import { summaryImagePath } from '@/lib/routes';
 
@@ -12,6 +13,7 @@ const noop = () => () => {};
 export function ShareImage({ groupId, groupName }: { groupId: string; groupName: string }) {
   // server snapshot false → no hydration mismatch; client re-renders with the real value
   const canShare = useSyncExternalStore(noop, () => !!navigator.canShare?.({ files: [probe()] }), () => false);
+  const t = useT();
   const [status, setStatus] = useState<Status>('idle');
   const file = useRef<File | null>(null);
   const fileName = `quick-split-${qrNote(groupName).toLowerCase().replace(/ /g, '-') || 'nhom'}.png`;
@@ -48,12 +50,8 @@ export function ShareImage({ groupId, groupName }: { groupId: string; groupName:
     }
   }
 
-  const label = {
-    idle: canShare ? '📤 Chia sẻ ảnh tổng kết' : '⬇️ Tải ảnh tổng kết',
-    busy: 'Đang tạo…',
-    retry: 'Bấm lại để chia sẻ',
-    failed: 'Lỗi, thử lại',
-  }[status];
+  const s = t.balances.share;
+  const label = { idle: canShare ? s.share : s.download, busy: s.busy, retry: s.retry, failed: s.failed }[status];
 
   return (
     <button type="button" onClick={run} disabled={status === 'busy'} className="rounded-full bg-white px-4 py-2 text-sm font-bold text-brand-700 hover:bg-brand-50 disabled:opacity-60">

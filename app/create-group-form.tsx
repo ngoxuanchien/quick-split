@@ -2,22 +2,24 @@
 
 import { useActionState } from 'react';
 import { createGroup } from './actions';
+import { useT } from './locale-provider';
 
 export function CreateGroupForm() {
+  const t = useT();
   const [state, action, pending] = useActionState(createGroup, undefined);
   return (
     <form action={action} className="card space-y-4 shadow-[0_10px_30px_rgba(124,58,237,0.15)]">
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Tên nhóm</span>
-        <input name="name" defaultValue={state?.input?.name} required maxLength={100} placeholder="Đà Lạt 2026" className="input" />
+        <span className="text-sm font-medium">{t.home.groupName}</span>
+        <input name="name" defaultValue={state?.input?.name} required maxLength={100} placeholder={t.home.groupNamePlaceholder} className="input" />
       </label>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Thành viên (mỗi dòng 1 người)</span>
-        <textarea name="members" defaultValue={state?.input?.members} required rows={5} placeholder={'An\nBình\nChi'} className="input" />
+        <span className="text-sm font-medium">{t.home.members}</span>
+        <textarea name="members" defaultValue={state?.input?.members} required rows={5} placeholder={t.home.membersPlaceholder} className="input" />
       </label>
       {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
       <button disabled={pending} className="btn w-full">
-        {pending ? 'Đang tạo…' : 'Tạo nhóm →'}
+        {pending ? t.home.creating : t.home.create}
       </button>
     </form>
   );
