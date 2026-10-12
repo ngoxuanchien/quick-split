@@ -40,7 +40,7 @@ export default async function GroupPage({
   const current = tab === 'members' || tab === 'balances' ? tab : 'expenses';
 
   return (
-    <div className="pb-28">
+    <div className="pb-[calc(9rem+env(safe-area-inset-bottom))]">
       <header className="hero px-4 pt-5 pb-4">
         <div className="flex items-center justify-between gap-2">
           <h1 className="truncate text-lg font-bold">{current === 'members' ? 'Thành viên' : data.group.name}</h1>
@@ -80,7 +80,7 @@ export default async function GroupPage({
               key={key}
               href={groupPath(id, key)}
               aria-current={current === key ? 'page' : undefined}
-              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${current === key ? 'font-bold text-brand-600 dark:text-brand-300' : 'text-gray-400 dark:text-brand-300/50'}`}
+              className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${current === key ? 'font-bold text-brand-600 dark:text-brand-300' : 'text-gray-500 dark:text-brand-300/70'}`}
             >
               <span aria-hidden className="text-lg leading-none">
                 {icon}
