@@ -145,22 +145,18 @@ function MembersTab({ data }: { data: GroupData }) {
 function ExpensesTab({ data }: { data: GroupData }) {
   const id = data.group.id;
   const name = new Map(data.members.map((m) => [m.id, m.name]));
-  const add = expensePath(id, 'new');
   return (
-    <div className="space-y-3 pb-20 sm:pb-0">
-      <Link href={add} className="btn hidden text-center sm:block">
-        + Thêm khoản chi
-      </Link>
+    <div className="space-y-3">
       {data.expenses.length === 0 && (
         <div className="card space-y-2 py-10 text-center">
           <div className="text-4xl">🧾</div>
-          <p className="font-medium">Chưa có khoản chi nào</p>
+          <p className="font-bold">Chưa có khoản chi nào</p>
           <p className="muted text-sm">Bấm “+” để ghi khoản đầu tiên, ví dụ tiền ăn hay tiền phòng.</p>
         </div>
       )}
       {data.expenses.map((e) =>
         isPayment(e) ? (
-          <div key={e.id} className="muted flex items-center gap-3 px-4 py-1 text-sm">
+          <div key={e.id} className="muted flex items-center gap-3 px-2 py-1 text-sm">
             <span aria-hidden>↔</span>
             <span className="min-w-0 flex-1 truncate">
               {name.get(e.payerId)} đã trả {name.get(e.splits[0].memberId)} · {formatDateVn(e.createdAt)}
@@ -172,20 +168,20 @@ function ExpensesTab({ data }: { data: GroupData }) {
           <div key={e.id} className="card flex items-center gap-3">
             <Avatar id={e.payerId} name={name.get(e.payerId)!} />
             <Link href={expensePath(id, e.id)} className="min-w-0 flex-1">
-              <div className="truncate font-medium">{e.title}</div>
-              <div className="muted text-sm">
+              <div className="truncate font-bold">{e.title}</div>
+              <div className="truncate text-xs text-brand-500 dark:text-brand-300/80">
                 {name.get(e.payerId)} trả · {formatDateVn(e.createdAt)}
               </div>
             </Link>
-            <div className="font-semibold">{formatVnd(e.amount)}</div>
+            <div className="font-bold">{formatVnd(e.amount)}</div>
             <DeleteButton action={deleteExpense.bind(null, id, e.id)} confirmText={`Xoá "${e.title}"?`} />
           </div>
         ),
       )}
       <Link
-        href={add}
+        href={expensePath(id, 'new')}
         aria-label="Thêm khoản chi"
-        className="fixed right-4 bottom-6 z-20 flex size-14 items-center justify-center rounded-full bg-emerald-600 text-3xl text-white shadow-lg hover:bg-emerald-700 sm:hidden"
+        className="fixed right-[max(1rem,calc((100vw-32rem)/2+1rem))] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-brand-600 to-accent-600 text-3xl text-white shadow-[0_10px_24px_rgba(219,39,119,0.4)] hover:brightness-110"
       >
         +
       </Link>
