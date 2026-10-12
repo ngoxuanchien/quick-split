@@ -6,6 +6,7 @@ z.config(z.locales.vi());
 
 export const MAX_AMOUNT = 1_000_000_000_000;
 export const MAX_SHARES = 1000;
+export const MAX_MEMBERS = 50;
 
 export const memberName = z.string().trim().min(1, 'Nhập tên thành viên').max(50, 'Tên tối đa 50 ký tự');
 
@@ -14,7 +15,7 @@ export const groupInput = z.object({
   members: z
     .array(memberName)
     .min(2, 'Cần ít nhất 2 thành viên')
-    .max(50, 'Tối đa 50 thành viên')
+    .max(MAX_MEMBERS, `Tối đa ${MAX_MEMBERS} thành viên`)
     .refine((a) => new Set(a.map((s) => s.toLowerCase())).size === a.length, 'Tên thành viên bị trùng'),
 });
 

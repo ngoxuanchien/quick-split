@@ -9,7 +9,7 @@ import { getGroup } from '@/db/queries';
 import { expenses, expenseSplits, groups, members } from '@/db/schema';
 import { isOwed } from '@/lib/split';
 import { groupPath } from '@/lib/routes';
-import { expenseInput, firstError, groupInput, memberName, type ExpenseInput } from '@/lib/validation';
+import { expenseInput, firstError, groupInput, MAX_MEMBERS, memberName, type ExpenseInput } from '@/lib/validation';
 
 // input echoes submitted text so forms can refill it (React 19 resets forms after an action)
 export type Result = { error: string; input?: Record<string, string> } | undefined;
@@ -40,6 +40,7 @@ export async function addMember(groupId: string, _prev: Result, formData: FormDa
   const name = memberName.safeParse(input.name);
   if (!name.success) return { error: firstError(name.error), input };
   const existing = await groupMembers(groupId);
+  if (existing.length >= MAX_MEMBERS) return { error: `Tối đa ${MAX_MEMBERS} thành viên`, input };
   if (existing.some((m) => m.name.toLowerCase() === name.data.toLowerCase())) return { error: 'Tên thành viên bị trùng', input };
   await db.insert(members).values({ groupId, name: name.data });
   revalidatePath(groupPath(groupId));
