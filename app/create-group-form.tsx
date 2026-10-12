@@ -1,0 +1,24 @@
+'use client';
+
+import { useActionState } from 'react';
+import { createGroup } from './actions';
+
+export function CreateGroupForm() {
+  const [state, action, pending] = useActionState(createGroup, undefined);
+  return (
+    <form action={action} className="card space-y-4">
+      <label className="block space-y-1">
+        <span className="text-sm font-medium">Tên nhóm</span>
+        <input name="name" required maxLength={100} placeholder="Đà Lạt 2026" className="input" />
+      </label>
+      <label className="block space-y-1">
+        <span className="text-sm font-medium">Thành viên (mỗi dòng 1 người)</span>
+        <textarea name="members" required rows={5} placeholder={'An\nBình\nChi'} className="input" />
+      </label>
+      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      <button disabled={pending} className="btn w-full">
+        {pending ? 'Đang tạo…' : 'Tạo nhóm'}
+      </button>
+    </form>
+  );
+}
