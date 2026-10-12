@@ -5,7 +5,7 @@ import { getGroup, type GroupData } from '@/db/queries';
 import { formatDateVn } from '@/lib/date';
 import { formatVnd } from '@/lib/money';
 import { expensePath, groupPath } from '@/lib/routes';
-import { balances, settle } from '@/lib/split';
+import { summarize, type Summary } from '@/lib/summary';
 import { CopyLink } from './copy-link';
 import { DeleteButton } from './delete-button';
 import { MemberNameForm } from './member-name-form';
@@ -31,26 +31,34 @@ export default async function GroupPage({
   const { tab = 'expenses' } = await searchParams;
   const data = await getGroup(id);
   if (!data) notFound();
+  const sum = summarize(data);
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between gap-2">
-        <h1 className="truncate text-xl font-bold">{data.group.name}</h1>
-        <CopyLink />
+      <header className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="truncate text-xl font-bold">{data.group.name}</h1>
+          <CopyLink />
+        </div>
+        <p className="muted text-sm">
+          {data.members.length} người · Tổng chi {formatVnd(sum.total)}
+        </p>
       </header>
-      <nav className="grid grid-cols-3 rounded-lg bg-gray-200 p-1 text-center text-sm">
-        {TABS.map(([key, label]) => (
-          <Link
-            key={key}
-            href={groupPath(id, key)}
-            className={`rounded-md py-1.5 ${tab === key ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
-          >
-            {label}
-          </Link>
-        ))}
+      <nav className="sticky top-0 z-10 -mx-4 bg-gray-50/90 px-4 py-2 backdrop-blur dark:bg-gray-950/90">
+        <div className="grid grid-cols-3 rounded-lg bg-gray-200 p-1 text-center text-sm dark:bg-gray-800">
+          {TABS.map(([key, label]) => (
+            <Link
+              key={key}
+              href={groupPath(id, key)}
+              className={`rounded-md py-1.5 ${tab === key ? 'bg-white font-medium text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-400' : 'muted'}`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
       </nav>
       {tab === 'members' && <MembersTab data={data} />}
-      {tab === 'balances' && <BalancesTab data={data} />}
+      {tab === 'balances' && <BalancesTab data={data} sum={sum} />}
       {tab !== 'members' && tab !== 'balances' && <ExpensesTab data={data} />}
     </div>
   );
@@ -63,9 +71,9 @@ function deleteHint(used: boolean, minReached: boolean) {
 }
 
 function balanceClass(v: number) {
-  if (v > 0) return 'text-emerald-700';
-  if (v < 0) return 'text-red-600';
-  return 'text-gray-500';
+  if (v > 0) return 'text-emerald-700 dark:text-emerald-400';
+  if (v < 0) return 'text-red-600 dark:text-red-400';
+  return 'muted';
 }
 
 function MembersTab({ data }: { data: GroupData }) {
@@ -111,12 +119,12 @@ function ExpensesTab({ data }: { data: GroupData }) {
       <Link href={expensePath(id, 'new')} className="btn block text-center">
         + Thêm khoản chi
       </Link>
-      {data.expenses.length === 0 && <p className="text-center text-gray-500">Chưa có khoản chi nào.</p>}
+      {data.expenses.length === 0 && <p className="text-center muted">Chưa có khoản chi nào.</p>}
       {data.expenses.map((e) => (
         <div key={e.id} className="card flex items-center gap-3">
           <Link href={expensePath(id, e.id)} className="min-w-0 flex-1">
             <div className="truncate font-medium">{e.title}</div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm muted">
               {name.get(e.payerId)} trả · {formatDateVn(e.createdAt)}
             </div>
           </Link>
@@ -128,11 +136,11 @@ function ExpensesTab({ data }: { data: GroupData }) {
   );
 }
 
-function BalancesTab({ data }: { data: GroupData }) {
+function BalancesTab({ data, sum }: { data: GroupData; sum: Summary }) {
   const id = data.group.id;
   const name = new Map(data.members.map((m) => [m.id, m.name]));
-  const bal = balances(data.expenses);
-  const transfers = settle(bal);
+  const bal = new Map(sum.rows.map((r) => [r.member.id, r.balance]));
+  const transfers = sum.transfers;
   return (
     <div className="space-y-4">
       <div className="card space-y-2">
@@ -150,7 +158,7 @@ function BalancesTab({ data }: { data: GroupData }) {
         })}
       </div>
       <h2 className="font-semibold">Cách trả nợ</h2>
-      {transfers.length === 0 && <p className="text-gray-500">Mọi người đã cân bằng 🎉</p>}
+      {transfers.length === 0 && <p className="muted">Mọi người đã cân bằng 🎉</p>}
       {transfers.map((t) => (
         <div key={`${t.from}-${t.to}`} className="card flex items-center gap-3">
           <div className="flex-1">

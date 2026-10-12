@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 
-const LABEL = { idle: 'Copy link', copied: 'Đã copy ✓', failed: 'Copy lỗi, hãy copy URL' };
+const LABEL = { idle: '🔗 Copy link', copied: 'Đã copy ✓', failed: 'Copy lỗi, hãy copy URL' };
 
 export function CopyLink() {
   const [status, setStatus] = useState<keyof typeof LABEL>('idle');
   return (
     <button
       type="button"
-      className="shrink-0 rounded-lg border border-gray-300 px-3 py-1 text-sm"
+      className="btn-ghost shrink-0"
       onClick={async () => {
         try {
           // navigator.clipboard is undefined outside secure contexts (e.g. http://<LAN IP>)
