@@ -101,8 +101,8 @@ function deleteHint(used: boolean, minReached: boolean) {
 }
 
 function balanceClass(v: number) {
-  if (v > 0) return 'text-emerald-700 dark:text-emerald-400';
-  if (v < 0) return 'text-red-600 dark:text-red-400';
+  if (v > 0) return 'text-brand-600 dark:text-brand-300';
+  if (v < 0) return 'text-accent-600 dark:text-accent-500';
   return 'muted';
 }
 
@@ -201,59 +201,65 @@ async function BalancesTab({ data, sum }: { data: GroupData; sum: Summary }) {
             <div className="flex items-center gap-2">
               <Avatar id={m.id} name={m.name} size="sm" />
               <span className="flex-1 truncate">{m.name}</span>
-              <span className={`font-medium ${balanceClass(v)}`}>
+              <span className={`font-bold ${balanceClass(v)}`}>
                 {v > 0 ? '+' : ''}
                 {formatVnd(v)}
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800">
+            <div className="h-1.5 rounded-full bg-brand-50 dark:bg-line-dark">
               <div
-                className={`h-full rounded-full ${v >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                className={`h-full rounded-full ${v >= 0 ? 'bg-brand-500' : 'bg-accent-500'}`}
                 style={{ width: `${(Math.abs(v) / sum.maxAbs) * 100}%` }}
               />
             </div>
           </div>
         ))}
       </div>
-      <h2 className="font-semibold">Cách trả nợ</h2>
+      <h2 className="font-bold">Ai trả ai</h2>
       {sum.transfers.length === 0 && <p className="muted">Mọi người đã cân bằng 🎉</p>}
       {sum.transfers.map((t, i) => {
         const from = name.get(t.from)!;
         const to = name.get(t.to)!;
+        const qr = t.account ? qrs[i] : undefined;
         return (
           <div key={`${t.from}-${t.to}`} className="card space-y-3">
-            <div className="flex items-center gap-2">
-              <Avatar id={t.from} name={from} size="sm" />
-              <b className="truncate">{from}</b>
-              <span className="muted">→</span>
-              <Avatar id={t.to} name={to} size="sm" />
-              <b className="truncate">{to}</b>
+            <div className="flex items-center gap-3">
+              <Avatar id={t.from} name={from} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-bold">{from}</div>
+                <div className="truncate text-xs text-brand-500 dark:text-brand-300/80">trả cho {to}</div>
+              </div>
+              <div className="text-lg font-bold text-accent-600 dark:text-accent-500">{formatVnd(t.amount)}</div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 text-lg font-bold">{formatVnd(t.amount)}</div>
-              <ConfirmForm
-                action={recordPayment.bind(null, id, t.from, t.to, t.amount)}
-                confirmText={`Xác nhận ${from} đã trả ${to} ${formatVnd(t.amount)}?`}
-              >
-                <SubmitButton>Đã trả</SubmitButton>
-              </ConfirmForm>
+            <div className="grid grid-cols-2 gap-2">
+              {qr && t.account && (
+                <details className="group open:col-span-2">
+                  <summary className="btn-soft w-full cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span className="group-open:hidden">Quét QR</span>
+                    <span className="hidden group-open:inline">Ẩn QR</span>
+                  </summary>
+                  <div className="mt-3 flex flex-col items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- data URI, nothing to optimize */}
+                    <img src={qr} alt={`QR chuyển ${formatVnd(t.amount)} cho ${to}`} className="size-56 rounded-2xl bg-white p-2" />
+                    <p className="text-sm">
+                      {t.account.bank.name} · {t.account.accountNo}
+                    </p>
+                    <p className="muted text-xs">Mở app ngân hàng → Quét QR</p>
+                    <p className="text-center text-xs text-amber-700 dark:text-amber-400">
+                      ⚠️ Kiểm tra đúng tên {to} trên app ngân hàng trước khi chuyển. Ai có link nhóm đều sửa được STK.
+                    </p>
+                  </div>
+                </details>
+              )}
+              <div className={qr ? '[details[open]+&]:col-span-2' : 'col-span-2'}>
+                <ConfirmForm
+                  action={recordPayment.bind(null, id, t.from, t.to, t.amount)}
+                  confirmText={`Xác nhận ${from} đã trả ${to} ${formatVnd(t.amount)}?`}
+                >
+                  <SubmitButton className="btn w-full">Đã trả</SubmitButton>
+                </ConfirmForm>
+              </div>
             </div>
-            {qrs[i] && t.account && (
-              <details>
-                <summary className="cursor-pointer text-sm font-medium text-emerald-700 dark:text-emerald-400">Hiện QR chuyển khoản</summary>
-                <div className="mt-3 flex flex-col items-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- data URI, nothing to optimize */}
-                  <img src={qrs[i]} alt={`QR chuyển ${formatVnd(t.amount)} cho ${to}`} className="size-56 rounded-lg bg-white p-2" />
-                  <p className="text-sm">
-                    {t.account.bank.name} · {t.account.accountNo}
-                  </p>
-                  <p className="muted text-xs">Mở app ngân hàng → Quét QR</p>
-                  <p className="text-center text-xs text-amber-700 dark:text-amber-400">
-                    ⚠️ Kiểm tra đúng tên {to} trên app ngân hàng trước khi chuyển. Ai có link nhóm đều sửa được STK.
-                  </p>
-                </div>
-              </details>
-            )}
           </div>
         );
       })}
