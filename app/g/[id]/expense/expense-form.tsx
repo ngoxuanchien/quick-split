@@ -63,7 +63,7 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
       </label>
       <label className="block space-y-1">
         <span className="text-sm font-medium">
-          Số tiền {amount > 0 && <span className="text-gray-500">= {formatVnd(amount)}</span>}
+          Số tiền {amount > 0 && <span className="muted">= {formatVnd(amount)}</span>}
         </span>
         <input value={amountText} onChange={(e) => setAmountText(e.target.value)} required inputMode="numeric" placeholder="300000" className="input" />
       </label>
@@ -78,13 +78,13 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
         </select>
       </label>
 
-      <div className="grid grid-cols-3 rounded-lg bg-gray-200 p-1 text-center text-sm">
+      <div className="grid grid-cols-3 rounded-lg bg-gray-200 dark:bg-gray-800 p-1 text-center text-sm">
         {TYPES.map(([t, label]) => (
           <button
             key={t}
             type="button"
             onClick={() => setSplitType(t)}
-            className={`rounded-md py-1.5 ${splitType === t ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
+            className={`rounded-md py-1.5 ${splitType === t ? 'bg-white font-medium text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-400' : 'muted'}`}
           >
             {label}
           </button>
@@ -123,12 +123,12 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
                 aria-label={`Số phần của ${m.name}`}
               />
             )}
-            <span className="w-28 text-right text-sm text-gray-600">{owed.has(m.id) ? formatVnd(owed.get(m.id)!) : '–'}</span>
+            <span className="w-28 text-right text-sm muted">{owed.has(m.id) ? formatVnd(owed.get(m.id)!) : '–'}</span>
           </li>
         ))}
       </ul>
       {splitType === 'exact' && (
-        <p className={`text-sm ${exactSum === amount ? 'text-gray-600' : 'text-red-600'}`}>
+        <p className={`text-sm ${exactSum === amount ? 'muted' : 'text-red-600'}`}>
           Tổng chia: {formatVnd(exactSum)} / {formatVnd(amount)}
         </p>
       )}
