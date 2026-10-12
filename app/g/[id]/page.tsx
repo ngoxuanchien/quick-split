@@ -13,6 +13,7 @@ import { CopyLink } from './copy-link';
 import { ConfirmForm, DeleteButton } from './delete-button';
 import { MemberEditForm } from './member-edit-form';
 import { MemberNameForm } from './member-name-form';
+import { ShareImage } from './share-image';
 import { SubmitButton } from './submit-button';
 
 const TABS = [
@@ -147,6 +148,7 @@ async function BalancesTab({ data, sum }: { data: GroupData; sum: Summary }) {
   const qrs = await transferQrs(data.group.name, sum.transfers);
   return (
     <div className="space-y-4">
+      <ShareImage groupId={id} groupName={data.group.name} />
       <div className="card space-y-3">
         {sum.rows.map(({ member: m, balance: v }) => (
           <div key={m.id} className="space-y-1">
