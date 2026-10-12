@@ -1,6 +1,6 @@
 'use client';
 
-export function DeleteButton({ action, confirmText }: { action: () => Promise<void>; confirmText: string }) {
+export function ConfirmForm({ action, confirmText, children }: { action: () => Promise<void>; confirmText: string; children: React.ReactNode }) {
   return (
     <form
       action={action}
@@ -8,7 +8,15 @@ export function DeleteButton({ action, confirmText }: { action: () => Promise<vo
         if (!confirm(confirmText)) e.preventDefault();
       }}
     >
-      <button className="text-sm text-red-600">Xoá</button>
+      {children}
     </form>
+  );
+}
+
+export function DeleteButton({ action, confirmText }: { action: () => Promise<void>; confirmText: string }) {
+  return (
+    <ConfirmForm action={action} confirmText={confirmText}>
+      <button className="text-sm text-red-600">Xoá</button>
+    </ConfirmForm>
   );
 }

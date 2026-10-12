@@ -5,11 +5,12 @@ import { getGroup, type GroupData } from '@/db/queries';
 import { bankByBin } from '@/lib/banks';
 import { formatDateVn } from '@/lib/date';
 import { formatVnd } from '@/lib/money';
+import { transferQrs } from '@/lib/qr';
 import { expensePath, groupPath } from '@/lib/routes';
 import { summarize, type Summary } from '@/lib/summary';
 import { Avatar } from './avatar';
 import { CopyLink } from './copy-link';
-import { DeleteButton } from './delete-button';
+import { ConfirmForm, DeleteButton } from './delete-button';
 import { MemberEditForm } from './member-edit-form';
 import { MemberNameForm } from './member-name-form';
 import { SubmitButton } from './submit-button';
@@ -140,40 +141,74 @@ function ExpensesTab({ data }: { data: GroupData }) {
   );
 }
 
-function BalancesTab({ data, sum }: { data: GroupData; sum: Summary }) {
+async function BalancesTab({ data, sum }: { data: GroupData; sum: Summary }) {
   const id = data.group.id;
   const name = new Map(data.members.map((m) => [m.id, m.name]));
-  const bal = new Map(sum.rows.map((r) => [r.member.id, r.balance]));
-  const transfers = sum.transfers;
+  const qrs = await transferQrs(data.group.name, sum.transfers);
   return (
     <div className="space-y-4">
-      <div className="card space-y-2">
-        {data.members.map((m) => {
-          const v = bal.get(m.id) ?? 0;
-          return (
-            <div key={m.id} className="flex justify-between">
-              <span>{m.name}</span>
-              <span className={balanceClass(v)}>
+      <div className="card space-y-3">
+        {sum.rows.map(({ member: m, balance: v }) => (
+          <div key={m.id} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Avatar id={m.id} name={m.name} size="sm" />
+              <span className="flex-1 truncate">{m.name}</span>
+              <span className={`font-medium ${balanceClass(v)}`}>
                 {v > 0 ? '+' : ''}
                 {formatVnd(v)}
               </span>
             </div>
-          );
-        })}
+            <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800">
+              <div
+                className={`h-full rounded-full ${v >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                style={{ width: `${(Math.abs(v) / sum.maxAbs) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
       </div>
       <h2 className="font-semibold">Cách trả nợ</h2>
-      {transfers.length === 0 && <p className="muted">Mọi người đã cân bằng 🎉</p>}
-      {transfers.map((t) => (
-        <div key={`${t.from}-${t.to}`} className="card flex items-center gap-3">
-          <div className="flex-1">
-            <b>{name.get(t.from)}</b> → <b>{name.get(t.to)}</b>
-            <div className="font-semibold">{formatVnd(t.amount)}</div>
+      {sum.transfers.length === 0 && <p className="muted">Mọi người đã cân bằng 🎉</p>}
+      {sum.transfers.map((t, i) => {
+        const from = name.get(t.from)!;
+        const to = name.get(t.to)!;
+        return (
+          <div key={`${t.from}-${t.to}`} className="card space-y-3">
+            <div className="flex items-center gap-2">
+              <Avatar id={t.from} name={from} size="sm" />
+              <b className="truncate">{from}</b>
+              <span className="muted">→</span>
+              <Avatar id={t.to} name={to} size="sm" />
+              <b className="truncate">{to}</b>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 text-lg font-bold">{formatVnd(t.amount)}</div>
+              <ConfirmForm
+                action={recordPayment.bind(null, id, t.from, t.to, t.amount)}
+                confirmText={`Xác nhận ${from} đã trả ${to} ${formatVnd(t.amount)}?`}
+              >
+                <SubmitButton>Đã trả</SubmitButton>
+              </ConfirmForm>
+            </div>
+            {qrs[i] && t.account && (
+              <details>
+                <summary className="cursor-pointer text-sm font-medium text-emerald-700 dark:text-emerald-400">Hiện QR chuyển khoản</summary>
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- data URI, nothing to optimize */}
+                  <img src={qrs[i]} alt={`QR chuyển ${formatVnd(t.amount)} cho ${to}`} className="size-56 rounded-lg bg-white p-2" />
+                  <p className="text-sm">
+                    {t.account.bank.name} · {t.account.accountNo}
+                  </p>
+                  <p className="muted text-xs">Mở app ngân hàng → Quét QR</p>
+                  <p className="text-center text-xs text-amber-700 dark:text-amber-400">
+                    ⚠️ Kiểm tra đúng tên {to} trên app ngân hàng trước khi chuyển. Ai có link nhóm đều sửa được STK.
+                  </p>
+                </div>
+              </details>
+            )}
           </div>
-          <form action={recordPayment.bind(null, id, t.from, t.to, t.amount)}>
-            <SubmitButton>Đã trả</SubmitButton>
-          </form>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
