@@ -21,7 +21,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="vi" className={beVietnam.variable}>
       <body className="bg-canvas font-sans text-ink antialiased dark:bg-canvas-dark dark:text-violet-50">
-        <main className="mx-auto min-h-dvh max-w-lg">{children}</main>
+        <main className="mx-auto min-h-dvh max-w-lg lg:max-w-none">{children}</main>
       </body>
     </html>
   );

@@ -12,7 +12,7 @@ export default async function NewExpensePage({ params }: { params: Promise<{ id:
   const data = await getGroup(id);
   if (!data) notFound();
   return (
-    <div className="space-y-4 px-4 py-5">
+    <div className="space-y-4 px-4 py-5 lg:mx-auto lg:max-w-2xl lg:py-10">
       <Link href={groupPath(id)} className="link text-sm">
         ← {data.group.name}
       </Link>
