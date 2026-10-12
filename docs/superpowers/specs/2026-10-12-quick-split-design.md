@@ -22,12 +22,12 @@ edit history, realtime sync (refresh to see others' changes).
 
 ## Stack
 
-Next.js (App Router, TypeScript) + Server Actions, Drizzle ORM + Neon Postgres
-(`@neondatabase/serverless`), Tailwind CSS, zod for validation, Vitest for unit tests.
+Next.js (App Router, TypeScript) + Server Actions, Drizzle ORM + Postgres via `pg` (works with Neon in prod and local Docker Postgres in dev),
+Tailwind CSS, zod for validation, Vitest for unit tests.
 
 ## Data model
 
-- `groups`: `id` (nanoid(21), used in URL), `name`, `created_at`
+- `groups`: `id` (128-bit random base64url string from `crypto.randomBytes(16)`, used in URL), `name`, `created_at`
 - `members`: `id` (serial), `group_id` → groups, `name`
 - `expenses`: `id` (serial), `group_id` → groups, `title`, `amount` (integer VND, > 0),
   `payer_id` → members, `split_type` (`equal` | `exact` | `shares`), `created_at`
@@ -60,7 +60,7 @@ A settle-up payment from A to B is stored as an expense: `title='Thanh toán'`,
   - **Số dư**: per-member balance (green = được nhận, red = đang nợ) and settle list
     "A → B: 150.000đ" each with "Đã trả" button that records a payment.
   - **Thành viên**: add member, rename member. A member referenced by any
-    expense (as payer or split) cannot be deleted; others can.
+    expense (as payer or split) cannot be deleted; others can, as long as the group keeps ≥ 2 members.
 - `/g/[id]/expense/new`, `/g/[id]/expense/[eid]` — expense form: title, amount, payer,
   split type tabs (equal: checkboxes; exact: amount per member; shares: shares per
   member), live preview of each member's owed amount via `computeShares`.
