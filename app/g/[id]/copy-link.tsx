@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-
-const LABEL = { idle: 'Copy link', copied: 'Đã copy ✓', failed: 'Copy lỗi, hãy copy URL' };
+import { useT } from '@/app/locale-provider';
 
 export function CopyLink() {
-  const [status, setStatus] = useState<keyof typeof LABEL>('idle');
+  const t = useT();
+  const [status, setStatus] = useState<keyof typeof t.group.copyLink>('idle');
   return (
     <button
       type="button"
@@ -21,7 +21,7 @@ export function CopyLink() {
         setTimeout(() => setStatus('idle'), 2000);
       }}
     >
-      {LABEL[status]}
+      {t.group.copyLink[status]}
     </button>
   );
 }

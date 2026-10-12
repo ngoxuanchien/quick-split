@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getGroup } from '@/db/queries';
+import { getT } from '@/lib/i18n/server';
 import { groupPath } from '@/lib/routes';
 import { ExpenseForm } from '../expense-form';
 
@@ -11,12 +12,13 @@ export default async function NewExpensePage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const data = await getGroup(id);
   if (!data) notFound();
+  const t = await getT();
   return (
     <div className="space-y-4">
       <Link href={groupPath(id)} className="text-sm text-emerald-700">
         ← {data.group.name}
       </Link>
-      <h1 className="text-xl font-bold">Thêm khoản chi</h1>
+      <h1 className="text-xl font-bold">{t.expense.newTitle}</h1>
       <ExpenseForm groupId={id} members={data.members} />
     </div>
   );

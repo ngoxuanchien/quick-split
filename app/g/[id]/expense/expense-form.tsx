@@ -4,17 +4,16 @@ import { type FormEvent, useState, useTransition } from 'react';
 import { saveExpense } from '@/app/actions';
 import { formatVnd, parseVnd } from '@/lib/money';
 import { computeShares, type Split, type SplitType } from '@/lib/split';
+import { useLocale, useT } from '@/app/locale-provider';
 
 type Member = { id: number; name: string };
 type Expense = { id: number; title: string; amount: number; payerId: number; splitType: SplitType; splits: Split[] };
 
-const TYPES: [SplitType, string][] = [
-  ['equal', 'Chia đều'],
-  ['exact', 'Theo số tiền'],
-  ['shares', 'Theo phần'],
-];
+const TYPES: SplitType[] = ['equal', 'exact', 'shares'];
 
 export function ExpenseForm({ groupId, members, expense }: { groupId: string; members: Member[]; expense?: Expense }) {
+  const t = useT();
+  const locale = useLocale();
   const initial = (t: SplitType, fallback: string): Record<number, string> =>
     Object.fromEntries(
       members.map((m) => {
@@ -58,17 +57,17 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
   return (
     <form onSubmit={submit} className="card space-y-4">
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Tên khoản chi</span>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={100} placeholder="Ăn tối" className="input" />
+        <span className="text-sm font-medium">{t.expense.title}</span>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={100} placeholder={t.expense.titlePlaceholder} className="input" />
       </label>
       <label className="block space-y-1">
         <span className="text-sm font-medium">
-          Số tiền {amount > 0 && <span className="text-gray-500">= {formatVnd(amount)}</span>}
+          {t.expense.amount} {amount > 0 && <span className="text-gray-500">= {formatVnd(amount, locale)}</span>}
         </span>
         <input value={amountText} onChange={(e) => setAmountText(e.target.value)} required inputMode="numeric" placeholder="300000" className="input" />
       </label>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Người trả</span>
+        <span className="text-sm font-medium">{t.expense.payer}</span>
         <select value={payerId} onChange={(e) => setPayerId(Number(e.target.value))} className="input">
           {members.map((m) => (
             <option key={m.id} value={m.id}>
@@ -79,14 +78,14 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
       </label>
 
       <div className="grid grid-cols-3 rounded-lg bg-gray-200 p-1 text-center text-sm">
-        {TYPES.map(([t, label]) => (
+        {TYPES.map((type) => (
           <button
-            key={t}
+            key={type}
             type="button"
-            onClick={() => setSplitType(t)}
-            className={`rounded-md py-1.5 ${splitType === t ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
+            onClick={() => setSplitType(type)}
+            className={`rounded-md py-1.5 ${splitType === type ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
           >
-            {label}
+            {t.expense.splitTypes[type]}
           </button>
         ))}
       </div>
@@ -111,7 +110,7 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
                 inputMode="numeric"
                 placeholder="0"
                 className="input w-32 text-right"
-                aria-label={`Số tiền của ${m.name}`}
+                aria-label={t.expense.amountOf(m.name)}
               />
             )}
             {splitType === 'shares' && (
@@ -120,22 +119,22 @@ export function ExpenseForm({ groupId, members, expense }: { groupId: string; me
                 onChange={(e) => setShares({ ...shares, [m.id]: e.target.value })}
                 inputMode="numeric"
                 className="input w-16 text-right"
-                aria-label={`Số phần của ${m.name}`}
+                aria-label={t.expense.sharesOf(m.name)}
               />
             )}
-            <span className="w-28 text-right text-sm text-gray-600">{owed.has(m.id) ? formatVnd(owed.get(m.id)!) : '–'}</span>
+            <span className="w-28 text-right text-sm text-gray-600">{owed.has(m.id) ? formatVnd(owed.get(m.id)!, locale) : '–'}</span>
           </li>
         ))}
       </ul>
       {splitType === 'exact' && (
         <p className={`text-sm ${exactSum === amount ? 'text-gray-600' : 'text-red-600'}`}>
-          Tổng chia: {formatVnd(exactSum)} / {formatVnd(amount)}
+          {t.expense.splitTotal(formatVnd(exactSum, locale), formatVnd(amount, locale))}
         </p>
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button disabled={pending} className="btn w-full">
-        {pending ? 'Đang lưu…' : 'Lưu'}
+        {pending ? t.common.saving : t.common.save}
       </button>
     </form>
   );
