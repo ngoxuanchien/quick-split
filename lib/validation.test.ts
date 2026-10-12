@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { expenseInput, firstError, groupInput, MAX_AMOUNT } from './validation';
+import { expenseInput, firstError, groupInput, MAX_AMOUNT, MAX_MEMBERS } from './validation';
 
 const ok = { title: 'Ăn tối', amount: 300000, payerId: 1, splitType: 'equal' as const, splits: [{ memberId: 1, value: 1 }, { memberId: 2, value: 1 }] };
 const err = (input: unknown) => {
@@ -22,6 +22,12 @@ describe('groupInput', () => {
   });
   it('rejects empty group name', () => {
     expect(groupInput.safeParse({ name: '  ', members: ['An', 'Bình'] }).success).toBe(false);
+  });
+  it('caps members at MAX_MEMBERS', () => {
+    const names = (n: number) => Array.from({ length: n }, (_, i) => `M${i}`);
+    expect(groupInput.safeParse({ name: 'x', members: names(MAX_MEMBERS) }).success).toBe(true);
+    const r = groupInput.safeParse({ name: 'x', members: names(MAX_MEMBERS + 1) });
+    expect(firstError(r.error!)).toBe(`Tối đa ${MAX_MEMBERS} thành viên`);
   });
 });
 

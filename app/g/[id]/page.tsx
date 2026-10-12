@@ -5,6 +5,7 @@ import { getGroup, type GroupData } from '@/db/queries';
 import { formatDateVn } from '@/lib/date';
 import { formatVnd } from '@/lib/money';
 import { expensePath, groupPath } from '@/lib/routes';
+import { MAX_MEMBERS } from '@/lib/validation';
 import { balances, settle } from '@/lib/split';
 import { CopyLink } from './copy-link';
 import { DeleteButton } from './delete-button';
@@ -96,10 +97,35 @@ function MembersTab({ data }: { data: GroupData }) {
           </div>
         );
       })}
-      <div className="border-t border-gray-200 pt-3">
-        <MemberNameForm action={addMember.bind(null, id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn" />
-      </div>
+      {data.members.length < MAX_MEMBERS && (
+        <div className="border-t border-gray-200 pt-3">
+          <MemberNameForm action={addMember.bind(null, id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn" />
+        </div>
+      )}
     </div>
+  );
+}
+
+const chip = 'rounded-full px-2.5 py-0.5 text-sm';
+
+function MemberChips({ data }: { data: GroupData }) {
+  const chips = data.members.map((m) => (
+    <span key={m.id} className={`${chip} bg-gray-100`}>
+      {m.name}
+    </span>
+  ));
+  if (data.members.length >= MAX_MEMBERS) return <div className="flex flex-wrap gap-1.5">{chips}</div>;
+  // native <details> toggles the inline form without client JS
+  return (
+    <details>
+      <summary className="flex cursor-pointer list-none flex-wrap gap-1.5 [&::-webkit-details-marker]:hidden">
+        {chips}
+        <span className={`${chip} border border-dashed border-emerald-600 text-emerald-700`}>+ Thêm người</span>
+      </summary>
+      <div className="mt-2">
+        <MemberNameForm action={addMember.bind(null, data.group.id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn" />
+      </div>
+    </details>
   );
 }
 
@@ -108,6 +134,7 @@ function ExpensesTab({ data }: { data: GroupData }) {
   const name = new Map(data.members.map((m) => [m.id, m.name]));
   return (
     <div className="space-y-3">
+      <MemberChips data={data} />
       <Link href={expensePath(id, 'new')} className="btn block text-center">
         + Thêm khoản chi
       </Link>
