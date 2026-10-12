@@ -1,14 +1,19 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addMember, deleteMember, renameMember } from '@/app/actions';
+import { addMember, deleteExpense, deleteMember, renameMember } from '@/app/actions';
 import { getGroup, type GroupData } from '@/db/queries';
+import { formatVnd } from '@/lib/money';
 import { CopyLink } from './copy-link';
+import { DeleteButton } from './delete-button';
 
 const TABS = [
   ['expenses', 'Khoản chi'],
   ['balances', 'Số dư'],
   ['members', 'Thành viên'],
 ] as const;
+
+// always reads fresh DB data; blocking render is intended
+export const instant = false;
 
 export default async function GroupPage({
   params,
@@ -41,7 +46,7 @@ export default async function GroupPage({
       </nav>
       {tab === 'members' && <MembersTab data={data} />}
       {tab === 'balances' && <p>Số dư (Task 6)</p>}
-      {tab !== 'members' && tab !== 'balances' && <p>Khoản chi (Task 5)</p>}
+      {tab !== 'members' && tab !== 'balances' && <ExpensesTab data={data} />}
     </div>
   );
 }
@@ -76,6 +81,31 @@ function MembersTab({ data }: { data: GroupData }) {
         <input name="name" required maxLength={50} placeholder="Tên thành viên mới" className="input" />
         <button className="btn">Thêm</button>
       </form>
+    </div>
+  );
+}
+
+function ExpensesTab({ data }: { data: GroupData }) {
+  const id = data.group.id;
+  const name = new Map(data.members.map((m) => [m.id, m.name]));
+  return (
+    <div className="space-y-3">
+      <Link href={`/g/${id}/expense/new`} className="btn block text-center">
+        + Thêm khoản chi
+      </Link>
+      {data.expenses.length === 0 && <p className="text-center text-gray-500">Chưa có khoản chi nào.</p>}
+      {data.expenses.map((e) => (
+        <div key={e.id} className="card flex items-center gap-3">
+          <Link href={`/g/${id}/expense/${e.id}`} className="min-w-0 flex-1">
+            <div className="truncate font-medium">{e.title}</div>
+            <div className="text-sm text-gray-500">
+              {name.get(e.payerId)} trả · {e.createdAt.toLocaleDateString('vi-VN')}
+            </div>
+          </Link>
+          <div className="font-semibold">{formatVnd(e.amount)}</div>
+          <DeleteButton action={deleteExpense.bind(null, id, e.id)} confirmText={`Xoá "${e.title}"?`} />
+        </div>
+      ))}
     </div>
   );
 }
