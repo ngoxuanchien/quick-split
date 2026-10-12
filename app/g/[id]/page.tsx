@@ -116,27 +116,37 @@ function MembersTab({ data }: { data: GroupData }) {
         const hint = deleteHint(used.has(m.id), minReached);
         const bank = bankByBin(m.bankBin);
         return (
-          <details key={m.id} className="card">
+          <details key={m.id} className="card group open:ring-2 open:ring-brand-300 dark:open:ring-brand-700">
             <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
               <Avatar id={m.id} name={m.name} />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{m.name}</div>
-                <div className="muted truncate text-sm">{bank && m.accountNo ? `${bank.name} · ${m.accountNo}` : 'Chưa có STK'}</div>
+                <div className="truncate font-bold">{m.name}</div>
+                {bank && m.accountNo ? (
+                  <div className="truncate text-xs text-emerald-600 dark:text-emerald-400">
+                    🏦 {bank.name} · {m.accountNo}
+                  </div>
+                ) : (
+                  <div className="muted text-xs">Chưa có STK</div>
+                )}
               </div>
-              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Sửa</span>
+              <span className="link text-sm">
+                <span className="group-open:hidden">Sửa</span>
+                <span className="hidden group-open:inline">Đóng</span>
+              </span>
             </summary>
             <MemberEditForm action={updateMember.bind(null, id, m.id)} member={m} />
             <form action={deleteMember.bind(null, id, m.id)} className="mt-2 flex items-center justify-end gap-2">
               {hint && <span className="muted text-xs">{hint}</span>}
-              <button disabled={!!hint} className="text-sm text-red-600 disabled:text-gray-300 dark:disabled:text-gray-600">
+              <button disabled={!!hint} className="text-sm text-red-600 disabled:text-gray-300 dark:text-red-400 dark:disabled:text-gray-600">
                 Xoá thành viên
               </button>
             </form>
           </details>
         );
       })}
-      <div className="card">
-        <MemberNameForm action={addMember.bind(null, id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn" />
+      <div id="add-member" className="card scroll-mt-4 space-y-2">
+        <p className="text-sm font-bold">Thêm thành viên</p>
+        <MemberNameForm action={addMember.bind(null, id)} placeholder="Tên thành viên mới" label="Thêm" buttonClass="btn shrink-0" />
       </div>
     </div>
   );
